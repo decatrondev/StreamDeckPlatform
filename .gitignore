@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+
+## Rider / VS
+.vs/
+.idea/
+*.userprefs
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets locales (credenciales de plugin en desarrollo)
+appsettings.Secrets.json
+appsettings.Secrets.*.json
+*.local.json

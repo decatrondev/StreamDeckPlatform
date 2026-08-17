@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Api/">
+    <Project Path="Api/Deck.Api/Deck.Api.csproj" />
+  </Folder>
+  <Folder Name="/Contracts/">
+    <Project Path="Contracts/Deck.SDK/Deck.SDK.csproj" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="Core/Deck.Core/Deck.Core.csproj" />
+  </Folder>
+  <Folder Name="/Device/">
+    <Project Path="Device/Deck.Device/Deck.Device.csproj" />
+  </Folder>
+  <Folder Name="/UI/">
+    <Project Path="UI/Deck.UI.Avalonia/Deck.UI.Avalonia.csproj" />
+  </Folder>
+</Solution>

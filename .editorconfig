@@ -1,0 +1,30 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+[*.cs]
+csharp_new_line_before_open_brace = all
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+dotnet_sort_system_directives_first = true
+
+# Nombres: PascalCase para tipos/miembros públicos, _camelCase para campos privados.
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_prefix
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+dotnet_naming_style.underscore_prefix.required_prefix = _
+
+[*.{xaml,axaml}]
+indent_size = 2
+
+[*.{yml,yaml,json}]
+indent_size = 2
