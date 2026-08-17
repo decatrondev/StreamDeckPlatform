@@ -118,6 +118,11 @@ public class PluginManagerTests : IDisposable
 
     public void Dispose()
     {
+        // Sqlite pool en Windows mantiene el handle del archivo abierto aunque
+        // el DbContext ya se haya ido de scope — sin esto, File.Delete tira
+        // IOException ahí (en Linux/macOS no hace falta, por eso solo fallaba
+        // en el runner de Windows).
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         File.Delete(_dbPath);
         File.Delete(_keyPath);
     }

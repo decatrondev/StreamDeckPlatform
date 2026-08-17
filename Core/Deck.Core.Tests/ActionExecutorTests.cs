@@ -69,6 +69,7 @@ public class ActionExecutorTests : IDisposable
 
     public void Dispose()
     {
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         File.Delete(_dbPath);
         File.Delete(_keyPath);
     }

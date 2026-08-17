@@ -95,5 +95,9 @@ public class DeckDbContextTests : IDisposable
         }
     }
 
-    public void Dispose() => File.Delete(_dbPath);
+    public void Dispose()
+    {
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        File.Delete(_dbPath);
+    }
 }

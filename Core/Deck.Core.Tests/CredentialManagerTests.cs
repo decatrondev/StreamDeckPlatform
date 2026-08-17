@@ -68,6 +68,7 @@ public class CredentialManagerTests : IDisposable
     public void Dispose()
     {
         _db.Dispose();
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         File.Delete(_dbPath);
         File.Delete(_keyPath);
     }
