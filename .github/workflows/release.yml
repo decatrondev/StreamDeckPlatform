@@ -21,10 +21,12 @@ jobs:
             rid: win-x64
             channel: win
             exe: Deck.UI.Avalonia.exe
+            icon: UI/Deck.UI.Avalonia/Assets/flowdeck.ico
           - os: ubuntu-latest
             rid: linux-x64
             channel: linux
             exe: Deck.UI.Avalonia
+            icon: UI/Deck.UI.Avalonia/Assets/flowdeck.png
           # Solo Apple Silicon por ahora (la gran mayoría de Macs actuales) —
           # agregar osx-x64 como canal separado si hace falta soportar Macs
           # Intel viejas; Velopack necesita un canal por RID, no se puede
@@ -33,6 +35,7 @@ jobs:
             rid: osx-arm64
             channel: osx
             exe: Deck.UI.Avalonia
+            icon: UI/Deck.UI.Avalonia/Assets/flowdeck.icns
 
     runs-on: ${{ matrix.os }}
 
@@ -69,6 +72,7 @@ jobs:
           -e ${{ matrix.exe }}
           --packTitle "Flowdeck"
           --packAuthors "Decatron"
+          --icon ${{ matrix.icon }}
           -y
 
       # Sin firma de código todavía (Windows/macOS piden certificado pago) —

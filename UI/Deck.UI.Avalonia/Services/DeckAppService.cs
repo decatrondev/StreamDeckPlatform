@@ -9,7 +9,8 @@ using Deck.Plugins.Obs;
 using Deck.Plugins.Spotify;
 using Deck.Plugins.Twitch;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Deck.UI.Avalonia.Services;
 
@@ -41,7 +42,22 @@ public class DeckAppService
         var credentials = new SqliteCredentialManager(
             db, CredentialEncryptionKey.LoadOrCreate(Path.Combine(appDataDir, "credentials.key")));
 
-        var plugins = new PluginManager(credentials, NullLoggerFactory.Instance);
+        // Sin esto no había forma de que el usuario final nos pase un error real —
+        // solo veía "no conecta" sin ningún detalle. Un archivo por día, 14 días de
+        // retención, en la misma carpeta de AppData que la db y las credenciales.
+        var logsDir = Path.Combine(appDataDir, "logs");
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(logsDir, "flowdeck-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14)
+            .CreateLogger();
+
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddSerilog(Log.Logger, dispose: true));
+        loggerFactory.CreateLogger("Flowdeck.Startup").LogInformation("Flowdeck arrancando. AppData: {AppDataDir}", appDataDir);
+
+        var plugins = new PluginManager(credentials, loggerFactory);
 
         // Todos con constructor sin parámetros — OBS apunta al puerto default
         // de obs-websocket (ws://127.0.0.1:4455, sin contraseña todavía

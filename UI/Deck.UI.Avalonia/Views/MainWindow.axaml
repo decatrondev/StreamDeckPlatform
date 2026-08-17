@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="620"
         x:Class="Deck.UI.Avalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/flowdeck.ico"
         Title="Flowdeck"
         Width="960" Height="620" MinWidth="720" MinHeight="480"
         Background="{StaticResource FlowdeckGraphiteBrush}"
