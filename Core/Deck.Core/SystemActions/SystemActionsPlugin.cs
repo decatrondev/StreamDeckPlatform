@@ -96,7 +96,24 @@ public class SystemActionsPlugin : IPlugin
     private static PluginActionResult OpenUrl(string parametersJson)
     {
         var url = GetRequiredString(parametersJson, "url");
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+
+        // Sin esquema, ShellExecute en Windows intenta abrirlo como archivo
+        // local y falla ("no se pudo abrir") — el error típico cuando el
+        // usuario escribe "google.com" en vez de "https://google.com".
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsed) || string.IsNullOrEmpty(parsed.Scheme))
+        {
+            url = $"https://{url}";
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            return PluginActionResult.Fail($"No se pudo abrir '{url}': {ex.Message}");
+        }
+
         return PluginActionResult.Ok($"'{url}' abierta.");
     }
 

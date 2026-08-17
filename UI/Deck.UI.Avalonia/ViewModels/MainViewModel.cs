@@ -31,14 +31,21 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsDialogOpen { get; set; }
 
     [ObservableProperty]
+    public partial bool IsSettingsDialogOpen { get; set; }
+
+    [ObservableProperty]
     public partial string? UpdateAvailableVersion { get; set; }
 
     [ObservableProperty]
     public partial AssignActionDialogViewModel? Dialog { get; set; }
 
+    [ObservableProperty]
+    public partial SettingsDialogViewModel? Settings { get; set; }
+
     public bool CanNavigateBack => _breadcrumb.Count > 1;
 
     public IRelayCommand NavigateBackCommand { get; }
+    public IRelayCommand OpenSettingsCommand { get; }
 
     // El diseñador de Avalonia instancia esto sin argumentos — solo para
     // previsualización, nunca corre en runtime real (ver App.axaml.cs).
@@ -48,6 +55,20 @@ public partial class MainViewModel : ViewModelBase
     {
         _app = app;
         NavigateBackCommand = new AsyncRelayCommand(NavigateBackAsync, () => CanNavigateBack);
+        OpenSettingsCommand = new RelayCommand(OpenSettings);
+    }
+
+    private void OpenSettings()
+    {
+        var settings = new SettingsDialogViewModel(_app);
+        settings.Closed += () =>
+        {
+            IsSettingsDialogOpen = false;
+            Settings = null;
+        };
+
+        Settings = settings;
+        IsSettingsDialogOpen = true;
     }
 
     // Llamado desde App.axaml.cs cuando UpdateService.UpdateReady dispara —

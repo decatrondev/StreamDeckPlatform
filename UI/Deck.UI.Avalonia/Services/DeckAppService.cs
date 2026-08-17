@@ -23,12 +23,14 @@ public class DeckAppService
     public DeckDbContext Db { get; }
     public PluginManager Plugins { get; }
     public ActionExecutor Executor { get; }
+    public ICredentialManager Credentials { get; }
 
-    private DeckAppService(DeckDbContext db, PluginManager plugins, ActionExecutor executor)
+    private DeckAppService(DeckDbContext db, PluginManager plugins, ActionExecutor executor, ICredentialManager credentials)
     {
         Db = db;
         Plugins = plugins;
         Executor = executor;
+        Credentials = credentials;
     }
 
     public static async Task<DeckAppService> StartAsync()
@@ -59,20 +61,22 @@ public class DeckAppService
 
         var plugins = new PluginManager(credentials, loggerFactory);
 
-        // Todos con constructor sin parámetros — OBS apunta al puerto default
-        // de obs-websocket (ws://127.0.0.1:4455, sin contraseña todavía
-        // configurada) y Spotify/Discord/Twitch arrancan con el client id
-        // placeholder documentado desde sus fases (SPOTIFY_CLIENT_ID_NOT_CONFIGURED,
-        // etc.) — autorizar de verdad falla hasta que se registren las apps
-        // reales en cada plataforma, pero cargarlos no rompe nada: cada uno ya
-        // maneja "sin conectar todavía" sin tirar excepción (ver Fases 3-6).
+        // OBS apunta al puerto default de obs-websocket (ws://127.0.0.1:4455) —
+        // la contraseña, si el usuario tiene una configurada en OBS, se carga
+        // sola del Credential Manager (ver PluginSettingsView). Spotify/Discord/
+        // Twitch ya arrancan con Client ID real (ver PluginClientIds) — Discord
+        // puede conectar de una (RPC local, sin redirect URI). Twitch y Spotify
+        // todavía no van a poder loguear un usuario hasta que se sume el
+        // listener local de OAuth y se registre su redirect URI en cada
+        // dashboard — cargarlos ya mismo no rompe nada, cada uno maneja "sin
+        // conectar todavía" sin tirar excepción (ver Fases 3-6).
         var loadedPlugins = new[]
         {
             plugins.LoadInstance(new SystemActionsPlugin()),
             plugins.LoadInstance(new ObsPlugin()),
-            plugins.LoadInstance(new SpotifyPlugin()),
-            plugins.LoadInstance(new DiscordPlugin()),
-            plugins.LoadInstance(new TwitchPlugin()),
+            plugins.LoadInstance(new SpotifyPlugin(PluginClientIds.Spotify)),
+            plugins.LoadInstance(new DiscordPlugin(PluginClientIds.Discord)),
+            plugins.LoadInstance(new TwitchPlugin(PluginClientIds.Twitch)),
         };
 
         foreach (var plugin in loadedPlugins)
@@ -83,7 +87,7 @@ public class DeckAppService
 
         await SeedIfEmptyAsync(db);
 
-        return new DeckAppService(db, plugins, new ActionExecutor(plugins));
+        return new DeckAppService(db, plugins, new ActionExecutor(plugins), credentials);
     }
 
     private static async Task SeedIfEmptyAsync(DeckDbContext db)

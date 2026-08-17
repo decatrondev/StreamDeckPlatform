@@ -39,6 +39,8 @@
             </Border>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Classes="TitleBarButton" Content="⚙" Command="{Binding OpenSettingsCommand}"
+                        ToolTip.Tip="Ajustes de plugins" />
                 <Button Classes="TitleBarButton" Content="—" Click="OnMinimizeClick" />
                 <Button Classes="TitleBarButton" Content="□" Click="OnMaximizeClick" />
                 <Button Classes="TitleBarButton Close" Content="✕" Click="OnCloseClick" />
@@ -165,6 +167,56 @@
                         <Button Content="Cancelar" Classes="Secondary" Command="{Binding CancelCommand}" />
                         <Button Content="Guardar" Classes="Primary" Command="{Binding SaveCommand}" />
                     </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Ajustes de plugins — overlay propio, mismo patrón que el diálogo de asignar. -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Background="#B0000000"
+                IsVisible="{Binding IsSettingsDialogOpen}">
+            <Border Width="420" Background="{StaticResource FlowdeckSurfaceBrush}"
+                    BorderBrush="{StaticResource FlowdeckLineBrush}" BorderThickness="1"
+                    CornerRadius="12" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="14" DataContext="{Binding Settings}" x:DataType="vm:SettingsDialogViewModel">
+                    <TextBlock Text="Ajustes de plugins" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{StaticResource FlowdeckInkBrush}" />
+
+                    <StackPanel Spacing="6">
+                        <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}">
+                            <Run Text="OBS Studio — " /><Run Text="{Binding ObsStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock Text="Contraseña del servidor WebSocket de OBS (Herramientas → Configuración de WebSocket en OBS). Dejar vacío si no tiene."
+                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" />
+                        <TextBox Classes="FlowdeckField" PasswordChar="•" Text="{Binding ObsPassword}"
+                                  PlaceholderText="Contraseña de OBS WebSocket" />
+                        <Button Content="Guardar y reconectar" Classes="Primary" Command="{Binding SaveObsCommand}"
+                                HorizontalAlignment="Left" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}">
+                            <Run Text="Discord — " /><Run Text="{Binding DiscordStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock Text="Se conecta solo si Discord está abierto en esta máquina."
+                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}">
+                            <Run Text="Twitch — " /><Run Text="{Binding TwitchStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}" Margin="0,4,0,0">
+                            <Run Text="Spotify — " /><Run Text="{Binding SpotifyStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock Text="El login de Twitch y Spotify todavía no está disponible desde la app — llega en la próxima actualización."
+                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding FeedbackMessage}" FontSize="12"
+                               Foreground="{StaticResource FlowdeckSignalBrush}" />
+
+                    <Button Content="Cerrar" Classes="Secondary" Command="{Binding CloseCommand}"
+                            HorizontalAlignment="Right" />
                 </StackPanel>
             </Border>
         </Border>
