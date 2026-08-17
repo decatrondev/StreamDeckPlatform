@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-3xl: 1920px;
+  --breakpoint-4xl: 2560px;
+  --breakpoint-5xl: 3840px;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-graphite: #14171c;
+  --color-surface: #1c2028;
+  --color-surface-raised: #242a35;
+  --color-line: #2c323d;
+
+  --color-ink: #e7eaee;
+  --color-ink-muted: #8a94a6;
+  --color-ink-faint: #5c6577;
+
+  --color-accent: #2563eb;
+  --color-accent-light: #4d7ff5;
+  --color-signal: #f5a623;
+  --color-live: #22c55e;
+  --color-danger: #ef4444;
+
+  --shadow-key: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --shadow-key-pressed: 0 1px 0 0 rgb(0 0 0 / 0.3) inset, 0 2px 8px -4px rgb(0 0 0 / 0.6);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-graphite);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: white;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-light);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .deck-key {
+    box-shadow: var(--shadow-key);
+    transition: transform 90ms ease, box-shadow 90ms ease, background-color 150ms ease;
+  }
+
+  .deck-key:active {
+    box-shadow: var(--shadow-key-pressed);
+    transform: scale(0.96);
+  }
+}

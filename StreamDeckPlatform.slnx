@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Api/">
+    <Project Path="Api/Deck.Api.Tests/Deck.Api.Tests.csproj" />
     <Project Path="Api/Deck.Api/Deck.Api.csproj" />
   </Folder>
   <Folder Name="/Contracts/">
