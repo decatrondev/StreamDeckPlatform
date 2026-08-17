@@ -42,15 +42,6 @@ public partial class App : Application
                     mainWindow.WindowState = WindowState.Maximized;
                     mainWindow.Activate();
                 }));
-
-            // En background: no hay razón para demorar la ventana esperando a
-            // GitHub. Si hay una actualización, se descarga sola y se aplica
-            // recién cuando el proceso cierre (ver UpdateService) — nunca
-            // interrumpe la sesión actual.
-            var updateService = new UpdateService();
-            updateService.UpdateReady += version =>
-                Dispatcher.UIThread.Post(() => mainViewModel.NotifyUpdateReady(version));
-            _ = updateService.CheckAndPrepareAsync();
         }
 
         base.OnFrameworkInitializationCompleted();

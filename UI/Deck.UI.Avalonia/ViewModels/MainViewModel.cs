@@ -34,9 +34,6 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsSettingsDialogOpen { get; set; }
 
     [ObservableProperty]
-    public partial string? UpdateAvailableVersion { get; set; }
-
-    [ObservableProperty]
     public partial AssignActionDialogViewModel? Dialog { get; set; }
 
     [ObservableProperty]
@@ -70,11 +67,6 @@ public partial class MainViewModel : ViewModelBase
         Settings = settings;
         IsSettingsDialogOpen = true;
     }
-
-    // Llamado desde App.axaml.cs cuando UpdateService.UpdateReady dispara —
-    // la actualización ya se descargó y se va a aplicar sola al cerrar la
-    // app, esto es solo un aviso informativo, no bloquea nada.
-    public void NotifyUpdateReady(string version) => UpdateAvailableVersion = version;
 
     public async Task InitializeAsync()
     {
