@@ -30,7 +30,13 @@ public sealed class FakeDiscordIpcServer : IAsyncDisposable
     {
         if (!OperatingSystem.IsWindows())
         {
-            UnixSocketDirOverride = Path.Combine(Path.GetTempPath(), $"deck-discord-test-{Guid.NewGuid():N}");
+            // sockaddr_un.sun_path tiene un límite de ~104 bytes en macOS/BSD
+            // (108 en Linux) — Path.GetTempPath() en macOS ya son 60-70 chars
+            // por sí solo (/var/folders/xx/.../T/), así que un GUID completo
+            // ahí arriba se pasa del límite y el bind falla en silencio. "/tmp"
+            // a secas + un sufijo corto se mantiene bien adentro del límite en
+            // las dos plataformas.
+            UnixSocketDirOverride = $"/tmp/dsc-{Guid.NewGuid():N}"[..21];
             Directory.CreateDirectory(UnixSocketDirOverride);
         }
     }
