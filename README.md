@@ -17,8 +17,9 @@ StreamDeckPlatform.sln
 ├── UI/Deck.UI.Avalonia       → Virtual Deck (Windows/Linux/macOS, un solo código)
 ├── Api/Deck.Api              → ASP.NET Core + SignalR — sirve Web Deck y Mobile Deck
 ├── Device/Deck.Device        → Comunicación con hardware físico (HID/Serial/BLE)
-├── Plugins/                  → Un proyecto por integración (OBS, Spotify, Discord, Twitch...)
-│                                Se agregan uno a la vez, en su fase correspondiente.
+├── Plugins/
+│   └── Deck.Plugins.Obs       → Fase 3, completo. El resto (Spotify, Discord, Twitch)
+│                                se agrega uno a la vez, en su fase correspondiente.
 └── Clients/                  → WebDeck y MobileDeck (Fase 7-8, todavía no arrancaron)
 ```
 
@@ -69,7 +70,29 @@ StreamDeckPlatform.sln
 - Probado de punta a punta con captura de pantalla (Xvfb): asignar una tecla,
   guardarla, cerrarla, volver a abrirla y ejecutar la acción real.
 
-Siguiente: Fase 3 — Plugin #1: OBS.
+**Fase 3 — Plugin #1: OBS, completa.**
+
+- `Deck.Plugins.Obs`: primer plugin real, sobre `Deck.SDK` únicamente (sin
+  referenciar `Deck.Core`, como marca la regla dura). Cliente propio del
+  protocolo obs-websocket v5 (JSON sobre WebSocket, sin dependencias de
+  terceros) — sin OAuth, valida el patrón de Credential Manager con la
+  contraseña opcional de obs-websocket.
+- Acciones: cambiar escena, mutear/desmutear fuente, iniciar/detener stream,
+  iniciar/detener grabación.
+- Eventos: `stream-state` y `record-state` se relayan como `PluginEvent`, más
+  `connection-state` para que la UI pueda reflejar conectado/reconectando/caído.
+- Reconexión automática propia (el Core nunca reintenta por el plugin, es
+  responsabilidad del plugin): reintenta cada 3s ante una caída de red o cierre
+  de OBS; una contraseña inválida NO reintenta sola (queda en
+  `AuthenticationFailed`, evita spam de intentos con credenciales que no van a
+  funcionar).
+- `Deck.Plugins.Obs.Tests`: servidor OBS falso propio (protocolo v5 real sobre
+  `HttpListener`, sin depender de una instancia real de OBS en CI) — 8 tests:
+  handshake, las 6 acciones, autenticación correcta/incorrecta sin crashear,
+  relay de eventos, y reconexión automática real tras un cierre de conexión.
+  Checklist de "plugin listo" (sección 7) cumplido.
+
+Siguiente: Fase 4 — Credential Manager real (ya está) + Plugin #2: Spotify (OAuth).
 
 ## Build y tests
 
