@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Mismos tokens que flowdeck.decatron.net — un solo lenguaje visual para
+    toda la marca, del sitio a la app de escritorio.
+  -->
+  <Color x:Key="FlowdeckGraphite">#14171C</Color>
+  <Color x:Key="FlowdeckSurface">#1C2028</Color>
+  <Color x:Key="FlowdeckSurfaceRaised">#242A35</Color>
+  <Color x:Key="FlowdeckLine">#2C323D</Color>
+
+  <Color x:Key="FlowdeckInk">#E7EAEE</Color>
+  <Color x:Key="FlowdeckInkMuted">#8A94A6</Color>
+  <Color x:Key="FlowdeckInkFaint">#5C6577</Color>
+
+  <Color x:Key="FlowdeckAccent">#2563EB</Color>
+  <Color x:Key="FlowdeckAccentLight">#4D7FF5</Color>
+  <Color x:Key="FlowdeckSignal">#F5A623</Color>
+  <Color x:Key="FlowdeckDanger">#EF4444</Color>
+
+  <SolidColorBrush x:Key="FlowdeckGraphiteBrush" Color="{StaticResource FlowdeckGraphite}" />
+  <SolidColorBrush x:Key="FlowdeckSurfaceBrush" Color="{StaticResource FlowdeckSurface}" />
+  <SolidColorBrush x:Key="FlowdeckSurfaceRaisedBrush" Color="{StaticResource FlowdeckSurfaceRaised}" />
+  <SolidColorBrush x:Key="FlowdeckLineBrush" Color="{StaticResource FlowdeckLine}" />
+  <SolidColorBrush x:Key="FlowdeckInkBrush" Color="{StaticResource FlowdeckInk}" />
+  <SolidColorBrush x:Key="FlowdeckInkMutedBrush" Color="{StaticResource FlowdeckInkMuted}" />
+  <SolidColorBrush x:Key="FlowdeckInkFaintBrush" Color="{StaticResource FlowdeckInkFaint}" />
+  <SolidColorBrush x:Key="FlowdeckAccentBrush" Color="{StaticResource FlowdeckAccent}" />
+  <SolidColorBrush x:Key="FlowdeckAccentLightBrush" Color="{StaticResource FlowdeckAccentLight}" />
+  <SolidColorBrush x:Key="FlowdeckSignalBrush" Color="{StaticResource FlowdeckSignal}" />
+  <SolidColorBrush x:Key="FlowdeckDangerBrush" Color="{StaticResource FlowdeckDanger}" />
+
+  <!-- Propaga el accent de marca a todos los controles Fluent que usan el
+       accent de sistema (botones default, checkboxes, sliders, etc.) sin
+       tener que re-templatear cada control uno por uno. -->
+  <Color x:Key="SystemAccentColor">#2563EB</Color>
+  <Color x:Key="SystemAccentColorLight1">#4D7FF5</Color>
+  <Color x:Key="SystemAccentColorLight2">#6B94F7</Color>
+  <Color x:Key="SystemAccentColorDark1">#1D4ED8</Color>
+  <Color x:Key="SystemAccentColorDark2">#1E40AF</Color>
+
+</ResourceDictionary>

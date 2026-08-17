@@ -54,7 +54,22 @@ StreamDeckPlatform.sln
   dinámica real de un `.dll` separado, aislamiento de errores, cifrado de
   credenciales y round-trip de SQLite (incluye carpetas anidadas).
 
-Siguiente: Fase 2 — UI Virtual Deck (Avalonia).
+**Fase 2 — UI Virtual Deck (Avalonia), completa.**
+
+- Identidad visual propia: mismos tokens que `flowdeck.decatron.net` (grafito +
+  azul + ámbar), ventana sin chrome nativo (titlebar, drag y botones min/max/
+  cerrar 100% custom) — nada de wizard genérico de Windows.
+- `Deck.Core/SystemActions`: acciones nativas del sistema (abrir app, ejecutar
+  comando, abrir URL) registradas como un plugin más — mismo pipeline que
+  cualquier plugin de Fase 3+, sin depender de ninguno todavía.
+- Perfiles y páginas navegables (breadcrumb + volver), carpetas anidadas reales
+  (un botón "carpeta" navega a otra página).
+- Asignación de teclas por selector (diálogo propio, sin `MessageBox` nativo):
+  elegís acción o carpeta, completás los parámetros, se persiste en SQLite.
+- Probado de punta a punta con captura de pantalla (Xvfb): asignar una tecla,
+  guardarla, cerrarla, volver a abrirla y ejecutar la acción real.
+
+Siguiente: Fase 3 — Plugin #1: OBS.
 
 ## Build y tests
 

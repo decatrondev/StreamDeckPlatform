@@ -1,0 +1,87 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Botón de titlebar propio (min/max/close) — sin chrome nativo de Windows. -->
+  <Style Selector="Button.TitleBarButton">
+    <Setter Property="Width" Value="46" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.TitleBarButton:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource FlowdeckSurfaceRaisedBrush}" />
+  </Style>
+  <Style Selector="Button.TitleBarButton.Close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource FlowdeckDangerBrush}" />
+  </Style>
+  <Style Selector="Button.TitleBarButton:pointerover">
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />
+  </Style>
+
+  <!-- Ítem de navegación en el sidebar (perfiles). -->
+  <Style Selector="ListBox.ProfileList ListBoxItem">
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+  </Style>
+  <Style Selector="ListBox.ProfileList ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource FlowdeckSurfaceBrush}" />
+  </Style>
+  <Style Selector="ListBox.ProfileList ListBoxItem:selected">
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />
+  </Style>
+
+  <!-- Tecla de la grilla — el elemento central de toda la interacción. -->
+  <Style Selector="Button.DeckKey">
+    <Setter Property="Background" Value="{StaticResource FlowdeckSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource FlowdeckLineBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Padding" Value="6" />
+  </Style>
+  <Style Selector="Button.DeckKey:pointerover">
+    <Setter Property="BorderBrush" Value="{StaticResource FlowdeckAccentLightBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />
+  </Style>
+  <Style Selector="Button.DeckKey.Assigned">
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />
+  </Style>
+  <Style Selector="Button.DeckKey.Folder">
+    <Setter Property="BorderBrush" Value="{StaticResource FlowdeckAccent}" />
+  </Style>
+
+  <!-- Campos del diálogo de asignación. -->
+  <Style Selector="TextBox.FlowdeckField, ComboBox.FlowdeckField">
+    <Setter Property="Background" Value="{StaticResource FlowdeckGraphiteBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource FlowdeckLineBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="10,7" />
+  </Style>
+
+  <Style Selector="Button.Primary">
+    <Setter Property="Background" Value="{StaticResource FlowdeckAccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="16,8" />
+  </Style>
+  <Style Selector="Button.Primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource FlowdeckAccentLightBrush}" />
+  </Style>
+
+  <Style Selector="Button.Secondary">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="16,8" />
+  </Style>
+
+</Styles>
