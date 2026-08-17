@@ -16,6 +16,8 @@
   <Folder Name="/Plugins/">
     <Project Path="Plugins/Deck.Plugins.Obs.Tests/Deck.Plugins.Obs.Tests.csproj" />
     <Project Path="Plugins/Deck.Plugins.Obs/Deck.Plugins.Obs.csproj" />
+    <Project Path="Plugins/Deck.Plugins.Spotify.Tests/Deck.Plugins.Spotify.Tests.csproj" />
+    <Project Path="Plugins/Deck.Plugins.Spotify/Deck.Plugins.Spotify.csproj" />
   </Folder>
   <Folder Name="/UI/">
     <Project Path="UI/Deck.UI.Avalonia/Deck.UI.Avalonia.csproj" />

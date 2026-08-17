@@ -18,8 +18,9 @@ StreamDeckPlatform.sln
 ├── Api/Deck.Api              → ASP.NET Core + SignalR — sirve Web Deck y Mobile Deck
 ├── Device/Deck.Device        → Comunicación con hardware físico (HID/Serial/BLE)
 ├── Plugins/
-│   └── Deck.Plugins.Obs       → Fase 3, completo. El resto (Spotify, Discord, Twitch)
-│                                se agrega uno a la vez, en su fase correspondiente.
+│   ├── Deck.Plugins.Obs       → Fase 3, completo.
+│   └── Deck.Plugins.Spotify   → Fase 4, completo. Discord y Twitch se agregan
+│                                uno a la vez, en su fase correspondiente.
 └── Clients/                  → WebDeck y MobileDeck (Fase 7-8, todavía no arrancaron)
 ```
 
@@ -92,7 +93,31 @@ StreamDeckPlatform.sln
   relay de eventos, y reconexión automática real tras un cierre de conexión.
   Checklist de "plugin listo" (sección 7) cumplido.
 
-Siguiente: Fase 4 — Credential Manager real (ya está) + Plugin #2: Spotify (OAuth).
+**Fase 4 — Plugin #2: Spotify (OAuth real), completa.**
+
+- `Deck.Plugins.Spotify`: primera integración con OAuth de verdad —
+  Authorization Code + PKCE, sin client secret embebido (no hace falta:
+  PKCE es justo el flujo pensado para apps distribuidas). Valida que el
+  Credential Manager de Fase 1 (SQLite + AES-GCM) sirve tal cual para guardar
+  un `refresh_token`, no solo la contraseña simple que usaba OBS.
+- `BeginAuthorization`/`CompleteAuthorizationAsync` quedan fuera de `IPlugin`
+  a propósito — el contrato genérico no modela "abrir el navegador y
+  loguearse", eso lo maneja quien construya la UI de conexión (Fase 8+).
+- Acciones: reproducir, pausar, siguiente, anterior, volumen.
+- Evento `track-changed`: Spotify no tiene webhook de "canción cambió", así
+  que se hace polling liviano (cada 5s) mientras está conectado, emitiendo
+  el evento solo cuando el track realmente cambia.
+- Refresh automático del access_token si vence a mitad de una acción (401 →
+  refresca → reintenta una vez, sin que el usuario lo note) y manejo prolijo
+  si el refresh_token fue revocado (queda en `AuthenticationFailed`, no
+  reintenta solo — necesita reautorización).
+- `Deck.Plugins.Spotify.Tests`: servidor Spotify falso propio (auth + Web API
+  sobre `HttpListener`) que valida el PKCE de verdad (recomputa el challenge
+  a partir del verifier recibido) — 11 tests cubriendo autorización, refresh,
+  las 4 acciones de reproducción + volumen, expiración de token a mitad de
+  sesión, y el evento de cambio de canción.
+
+Siguiente: Fase 5 — Plugin #3: Discord (alcance por definir: ¿bot, webhook o Rich Presence?).
 
 ## Build y tests
 
