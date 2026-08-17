@@ -20,7 +20,8 @@ StreamDeckPlatform.sln
 ├── Plugins/
 │   ├── Deck.Plugins.Obs       → Fase 3, completo.
 │   ├── Deck.Plugins.Spotify   → Fase 4, completo.
-│   └── Deck.Plugins.Discord   → Fase 5, completo. Twitch se agrega en su fase.
+│   ├── Deck.Plugins.Discord   → Fase 5, completo.
+│   └── Deck.Plugins.Twitch    → Fase 6, completo. MVP de plugins cerrado.
 └── Clients/                  → WebDeck y MobileDeck (Fase 7-8, todavía no arrancaron)
 ```
 
@@ -140,7 +141,33 @@ StreamDeckPlatform.sln
   toggle de mute, cambio de canal, comando rechazado, webhook configurado/sin
   configurar, relay de eventos y reconexión automática tras una caída.
 
-Siguiente: Fase 6 — Plugin #4: Twitch (OAuth + EventSub, cierra el MVP de plugins).
+**Fase 6 — Plugin #4: Twitch, completa. MVP de plugins cerrado.**
+
+- OAuth Authorization Code + PKCE, mismo patrón que Spotify.
+- **EventSub por WebSocket** (`wss://eventsub.wss.twitch.tv/ws`) — el plugin
+  más exigente en tiempo real del MVP, tal como anticipaba el roadmap:
+  handshake con `session_welcome` (entrega un `session_id` que hay que usar
+  para dar de alta las suscripciones por REST, no alcanza con conectar),
+  `session_keepalive` periódico, y una decisión consciente de simplificar
+  `session_reconnect` tratándolo como una caída más en vez de migrar la
+  sesión en caliente al `reconnect_url` específico (documentado en el propio
+  código).
+- El keepalive resultó clave: una caída de red sin frame de cierre (probada
+  con `Abort()`, sin aviso prolijo) solo se nota gracias al watchdog de
+  inactividad que arma el cliente — mismo tipo de problema que ya había
+  aparecido con OBS en Fase 3, esta vez la propia Twitch lo vuelve parte
+  explícita del protocolo en lugar de dejarlo en manos de TCP.
+- Acciones: cambiar título, cambiar categoría, crear marcador, enviar mensaje
+  al chat (vía Helix `/chat/messages`, no IRC).
+- Eventos EventSub relayados como `PluginEvent`: `follow`, `subscribe`, `raid`.
+- `Deck.Plugins.Twitch.Tests`: dos servidores falsos (Helix+OAuth por HTTP,
+  EventSub por WebSocket) — 9 tests cubriendo PKCE, conexión y alta de las 3
+  suscripciones, las 4 acciones, token vencido a mitad de sesión, relay de
+  evento `follow`, y reconexión automática disparada por el timeout de
+  keepalive ante una caída sin aviso.
+
+Con esto se completan las Fases 0-6: Core, UI y los 4 plugins del MVP
+(OBS, Spotify, Discord, Twitch). Siguiente: Fase 7 — API y Web Deck.
 
 ## Build y tests
 
