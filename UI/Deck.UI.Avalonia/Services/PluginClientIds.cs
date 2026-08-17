@@ -15,4 +15,10 @@ internal static class PluginClientIds
     public const string Discord = "1166234674419474433";
     public const string Twitch = "84pudubhtwz6ax651d5wlm7nzf326v";
     public const string Spotify = "c8c0045024564d63a17468f78892aa6c";
+
+    // App "Flowdeck" registrada en https://decatron.net/developer/apps/new
+    // (redirect URI http://127.0.0.1:51823/callback/, scope read:profile).
+    // El client_secret que dio esa misma pantalla NO va acá ni en ningún
+    // lado del repo — el login usa PKCE puro.
+    public const string Decatron = "deca_PwtaVcrycItIevaY3Qob";
 }

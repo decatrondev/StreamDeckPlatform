@@ -190,6 +190,18 @@
 
                     <StackPanel Spacing="6">
                         <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}">
+                            <Run Text="Cuenta Decatron — " /><Run Text="{Binding DecatronStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                        </TextBlock>
+                        <TextBlock Text="Iniciá sesión con tu cuenta de Decatron (usa tu Twitch) para identificarte en Flowdeck. Se abre el navegador."
+                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" />
+                        <Button Content="Conectar con Decatron" Classes="Primary" Command="{Binding ConnectDecatronCommand}"
+                                IsVisible="{Binding !IsDecatronConnected}" HorizontalAlignment="Left" />
+                        <Button Content="Desconectar" Classes="Secondary" Command="{Binding DisconnectDecatronCommand}"
+                                IsVisible="{Binding IsDecatronConnected}" HorizontalAlignment="Left" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock FontWeight="Medium" Foreground="{StaticResource FlowdeckInkBrush}">
                             <Run Text="OBS Studio — " /><Run Text="{Binding ObsStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         </TextBlock>
                         <TextBlock Text="Contraseña del servidor WebSocket de OBS (Herramientas → Configuración de WebSocket en OBS). Dejar vacío si no tiene."
