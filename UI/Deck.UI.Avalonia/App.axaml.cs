@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Deck.UI.Avalonia.Services;
 using Deck.UI.Avalonia.ViewModels;
 using Deck.UI.Avalonia.Views;
@@ -28,6 +29,15 @@ public partial class App : Application
             {
                 DataContext = mainViewModel,
             };
+
+            // En background: no hay razón para demorar la ventana esperando a
+            // GitHub. Si hay una actualización, se descarga sola y se aplica
+            // recién cuando el proceso cierre (ver UpdateService) — nunca
+            // interrumpe la sesión actual.
+            var updateService = new UpdateService();
+            updateService.UpdateReady += version =>
+                Dispatcher.UIThread.Post(() => mainViewModel.NotifyUpdateReady(version));
+            _ = updateService.CheckAndPrepareAsync();
         }
 
         base.OnFrameworkInitializationCompleted();

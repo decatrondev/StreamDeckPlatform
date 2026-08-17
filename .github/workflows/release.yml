@@ -1,0 +1,106 @@
+name: release
+
+# Se dispara con un tag "v*" (ej. v0.1.0) — separado de build.yml a propósito:
+# ese corre en cada push/PR y valida que compile+pasen los tests, este solo
+# corre cuando de verdad se quiere publicar una versión nueva.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            channel: win
+            exe: Deck.UI.Avalonia.exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            channel: linux
+            exe: Deck.UI.Avalonia
+          # Solo Apple Silicon por ahora (la gran mayoría de Macs actuales) —
+          # agregar osx-x64 como canal separado si hace falta soportar Macs
+          # Intel viejas; Velopack necesita un canal por RID, no se puede
+          # empaquetar x64+arm64 juntos en el mismo "osx".
+          - os: macos-latest
+            rid: osx-arm64
+            channel: osx
+            exe: Deck.UI.Avalonia
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Extraer versión del tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar self-contained (${{ matrix.rid }})
+        run: >
+          dotnet publish UI/Deck.UI.Avalonia/Deck.UI.Avalonia.csproj
+          -c Release -r ${{ matrix.rid }} --self-contained
+          -o publish/${{ matrix.rid }}
+
+      - name: Instalar vpk
+        run: dotnet tool install -g vpk
+
+      - name: Empaquetar con Velopack (${{ matrix.channel }})
+        shell: bash
+        run: >
+          vpk pack
+          -u Flowdeck
+          -v ${{ steps.version.outputs.version }}
+          -p publish/${{ matrix.rid }}
+          -o releases/${{ matrix.channel }}
+          -e ${{ matrix.exe }}
+          --packTitle "Flowdeck"
+          --packAuthors "Decatron"
+          -y
+
+      # Sin firma de código todavía (Windows/macOS piden certificado pago) —
+      # el usuario va a ver la advertencia estándar de "editor desconocido" al
+      # instalar hasta que eso se resuelva. Documentado, no bloqueante para
+      # que el mecanismo de auto-update funcione.
+      - name: Subir artifacts de ${{ matrix.channel }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: releases-${{ matrix.channel }}
+          path: releases/${{ matrix.channel }}
+          if-no-files-found: error
+
+  publish-release:
+    needs: package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar todos los artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: releases
+          pattern: releases-*
+          merge-multiple: false
+
+      # Los tres canales (win/linux/osx) conviven en el mismo GitHub Release —
+      # Velopack nombra cada archivo con el sufijo de canal (RELEASES-win,
+      # RELEASES-linux, RELEASES-osx), así que UpdateManager de cada
+      # plataforma encuentra solo lo suyo sin que se pisen entre sí.
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: releases/**/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

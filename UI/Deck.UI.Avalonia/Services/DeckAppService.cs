@@ -4,6 +4,10 @@ using Deck.Core.Execution;
 using Deck.Core.Model;
 using Deck.Core.Plugins;
 using Deck.Core.SystemActions;
+using Deck.Plugins.Discord;
+using Deck.Plugins.Obs;
+using Deck.Plugins.Spotify;
+using Deck.Plugins.Twitch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -38,9 +42,28 @@ public class DeckAppService
             db, CredentialEncryptionKey.LoadOrCreate(Path.Combine(appDataDir, "credentials.key")));
 
         var plugins = new PluginManager(credentials, NullLoggerFactory.Instance);
-        var systemPlugin = plugins.LoadInstance(new SystemActionsPlugin());
-        await plugins.InitializeAsync(systemPlugin.Metadata.Id);
-        await plugins.ConnectAsync(systemPlugin.Metadata.Id);
+
+        // Todos con constructor sin parámetros — OBS apunta al puerto default
+        // de obs-websocket (ws://127.0.0.1:4455, sin contraseña todavía
+        // configurada) y Spotify/Discord/Twitch arrancan con el client id
+        // placeholder documentado desde sus fases (SPOTIFY_CLIENT_ID_NOT_CONFIGURED,
+        // etc.) — autorizar de verdad falla hasta que se registren las apps
+        // reales en cada plataforma, pero cargarlos no rompe nada: cada uno ya
+        // maneja "sin conectar todavía" sin tirar excepción (ver Fases 3-6).
+        var loadedPlugins = new[]
+        {
+            plugins.LoadInstance(new SystemActionsPlugin()),
+            plugins.LoadInstance(new ObsPlugin()),
+            plugins.LoadInstance(new SpotifyPlugin()),
+            plugins.LoadInstance(new DiscordPlugin()),
+            plugins.LoadInstance(new TwitchPlugin()),
+        };
+
+        foreach (var plugin in loadedPlugins)
+        {
+            await plugins.InitializeAsync(plugin.Metadata.Id);
+            await plugins.ConnectAsync(plugin.Metadata.Id);
+        }
 
         await SeedIfEmptyAsync(db);
 

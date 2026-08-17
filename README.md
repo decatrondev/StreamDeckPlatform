@@ -312,6 +312,65 @@ Con esto se completan las Fases 0-6: Core, UI y los 4 plugins del MVP
   normal) tienen el SDK de Android, y agregarlo ahí rompería esos jobs sin
   necesidad.
 
+**Fase 9 — Auto-update, completa.**
+
+- **Gap cerrado antes de arrancar esta fase:** `Deck.UI.Avalonia` solo cargaba
+  el plugin de sistema desde la Fase 2 — los 4 plugins reales (OBS/Spotify/
+  Discord/Twitch) de las Fases 3-6 nunca quedaron conectados a la app de
+  escritorio. Ahora `DeckAppService` carga los 5 (constructores sin
+  parámetros, cada uno maneja "sin conectar todavía" sin tirar excepción, ya
+  documentado en sus propias fases), y el diálogo de asignar tecla
+  (`AssignActionDialogViewModel`) lista las acciones de todos los plugins
+  cargados, no solo las 3 del sistema. Como esos plugins todavía no publican
+  un `ParametersSchemaJson` por acción, sus parámetros se escriben como JSON
+  crudo en un campo de texto — simplificación consciente hasta que exista un
+  formulario dinámico por schema.
+- **Velopack** para el auto-update — no un instalador genérico de Windows
+  (requisito explícito del usuario desde el arranque del proyecto: "nada de
+  windows genérico como instalador"). `VelopackApp.Build().Run()` es
+  literalmente la primera línea de `Program.cs`, antes de cualquier API de
+  Avalonia — Velopack necesita interceptar argumentos propios del ciclo de
+  vida instalar/actualizar/desinstalar, sobre todo en Windows, y si algo
+  corre antes esos hooks nunca se disparan.
+- **Decisión de UX de `UpdateService`:** nunca se fuerza un restart en medio
+  de una sesión — esta es justo el tipo de app que alguien tiene abierta
+  mientras transmite en vivo, reiniciarla sola en el peor momento posible
+  rompería la confianza en la herramienta. En cambio se chequea en background
+  al arrancar, se descarga en silencio si hay una versión nueva, y se aplica
+  recién cuando el proceso cierra por su cuenta (`WaitExitThenApplyUpdates`)
+  — la próxima vez que el usuario abre Flowdeck ya está actualizado, sin
+  haber visto un solo diálogo. Un aviso chico y no bloqueante aparece en el
+  titlebar propio ("Actualización vX lista — se instala al cerrar") mientras
+  tanto, ninguna ventana modal genérica.
+- **CI separado (`release.yml`)**, disparado por tag `v*.*.*` — a diferencia
+  de `build.yml` (corre en cada push/PR, valida que compile), este solo
+  corre cuando de verdad se quiere publicar. Matriz Windows/Linux/macOS
+  (Apple Silicon únicamente por ahora — agregar `osx-x64` como canal aparte
+  si hace falta soportar Macs Intel viejas), cada uno hace `dotnet publish`
+  self-contained + `vpk pack` con el empaquetador nativo de su propio SO
+  (Velopack genera un instalador+`Update.exe` en Windows, un `.AppImage` en
+  Linux, un `.app`/`.pkg` en macOS — el mismo `vpk` CLI se comporta distinto
+  según el SO donde corre). Los tres canales terminan en el mismo GitHub
+  Release: cada archivo queda nombrado con el sufijo de su canal
+  (`RELEASES-win`/`RELEASES-linux`/`RELEASES-osx`), así que el
+  `UpdateManager` de cada plataforma encuentra solo lo suyo.
+- **Verificado de punta a punta en Linux** (la única plataforma real
+  disponible en este servidor): `dotnet publish -r linux-x64 --self-contained`
+  → `vpk pack` generó un `.AppImage` real de ~52MB → se corrió bajo Xvfb y
+  arrancó sin crashear con los 5 plugins cargados y el hook de Velopack
+  activo. Windows y macOS quedan sin verificar a mano (mismo motivo que
+  Mobile Deck: sin esas máquinas acá), pero corren en sus propios runners de
+  CI con el mismo mecanismo.
+- **Sin firma de código todavía** (Windows/macOS piden certificado pago) —
+  el usuario va a ver la advertencia estándar de "editor desconocido" al
+  instalar hasta que eso se resuelva. No bloquea que el auto-update
+  funcione, solo afecta la instalación inicial.
+- Versionado: **una sola versión para Core + los 4 plugins juntos** en este
+  release (todo se empaqueta y actualiza como una unidad). El roadmap
+  planteaba versionado independiente de plugins, pero no tiene sentido
+  todavía — recién con Fase 10 (SDK público) va a haber plugins de terceros
+  reales que necesiten su propio ciclo de versión, separado del Core.
+
 ## Build y tests
 
 ```bash
@@ -341,3 +400,24 @@ dotnet build Clients/MobileDeck/MobileDeck.csproj -f net10.0-android
 
 `Clients/MobileDeck.Core` (la lógica compartida, sin dependencia de Android)
 sí es parte de la solución normal y corre con el `dotnet test` de arriba.
+
+## Releases (auto-update)
+
+Publicar una versión nueva es tan simple como pushear un tag — `release.yml`
+hace el resto (build + `vpk pack` en los 3 SO + un único GitHub Release):
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Para probar el empaquetado a mano en local (por ejemplo en Linux):
+
+```bash
+dotnet publish UI/Deck.UI.Avalonia/Deck.UI.Avalonia.csproj \
+  -c Release -r linux-x64 --self-contained -o publish/linux-x64
+
+dotnet tool install -g vpk
+vpk pack -u Flowdeck -v 0.1.0 -p publish/linux-x64 -o releases/linux \
+  -e Deck.UI.Avalonia --packTitle "Flowdeck" --packAuthors "Decatron"
+```

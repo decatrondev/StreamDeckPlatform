@@ -31,6 +31,9 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsDialogOpen { get; set; }
 
     [ObservableProperty]
+    public partial string? UpdateAvailableVersion { get; set; }
+
+    [ObservableProperty]
     public partial AssignActionDialogViewModel? Dialog { get; set; }
 
     public bool CanNavigateBack => _breadcrumb.Count > 1;
@@ -46,6 +49,11 @@ public partial class MainViewModel : ViewModelBase
         _app = app;
         NavigateBackCommand = new AsyncRelayCommand(NavigateBackAsync, () => CanNavigateBack);
     }
+
+    // Llamado desde App.axaml.cs cuando UpdateService.UpdateReady dispara —
+    // la actualización ya se descargó y se va a aplicar sola al cerrar la
+    // app, esto es solo un aviso informativo, no bloquea nada.
+    public void NotifyUpdateReady(string version) => UpdateAvailableVersion = version;
 
     public async Task InitializeAsync()
     {
@@ -142,7 +150,12 @@ public partial class MainViewModel : ViewModelBase
 
     private void OpenAssignDialog(ButtonSlotViewModel button)
     {
-        var dialog = new AssignActionDialogViewModel();
+        var pluginActions = _app.Plugins.Plugins
+            .Where(p => p.Metadata.Id != SystemActionsPlugin.PluginId)
+            .SelectMany(p => p.Instance.Actions.Select(a => (p.Metadata.Id, p.Metadata.Name, a)))
+            .ToList();
+
+        var dialog = new AssignActionDialogViewModel(pluginActions);
         dialog.Closed += async result => await OnDialogClosedAsync(button, result);
 
         Dialog = dialog;
@@ -188,16 +201,19 @@ public partial class MainViewModel : ViewModelBase
                 Label = result.Label
             };
 
-            var parameters = result.ActionId == "open-url"
-                ? JsonSerializer.Serialize(new { url = result.PathOrUrl })
-                : JsonSerializer.Serialize(new { path = result.PathOrUrl, args = result.Args });
+            var isSystemAction = result.PluginId == SystemActionsPlugin.PluginId;
+            var parameters = !isSystemAction
+                ? (result.RawParametersJson ?? "{}")
+                : result.ActionId == "open-url"
+                    ? JsonSerializer.Serialize(new { url = result.PathOrUrl })
+                    : JsonSerializer.Serialize(new { path = result.PathOrUrl, args = result.Args });
 
             var step = new ActionStep
             {
                 Id = Guid.NewGuid(),
                 ButtonSlotId = slot.Id,
                 Order = 0,
-                PluginId = SystemActionsPlugin.PluginId,
+                PluginId = result.PluginId!,
                 ActionId = result.ActionId!,
                 ParametersJson = parameters
             };

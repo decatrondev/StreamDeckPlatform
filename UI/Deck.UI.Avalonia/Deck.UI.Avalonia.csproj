@@ -22,9 +22,14 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Deck.Core\Deck.Core.csproj" />
+    <ProjectReference Include="..\..\Plugins\Deck.Plugins.Obs\Deck.Plugins.Obs.csproj" />
+    <ProjectReference Include="..\..\Plugins\Deck.Plugins.Spotify\Deck.Plugins.Spotify.csproj" />
+    <ProjectReference Include="..\..\Plugins\Deck.Plugins.Discord\Deck.Plugins.Discord.csproj" />
+    <ProjectReference Include="..\..\Plugins\Deck.Plugins.Twitch\Deck.Plugins.Twitch.csproj" />
   </ItemGroup>
 </Project>
