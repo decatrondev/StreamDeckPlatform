@@ -1,0 +1,80 @@
+@page "/"
+@using MobileDeck.Services
+@inject DeckConnectionService Connection
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="connect-screen">
+    <div class="connect-card">
+        <div class="brand-row">
+            <div class="brand-mark">
+                <span class="brand-cell accent"></span>
+                <span class="brand-cell line"></span>
+                <span class="brand-cell line"></span>
+                <span class="brand-cell signal"></span>
+            </div>
+            <div>
+                <p class="brand-title">Mobile Deck</p>
+                <p class="brand-subtitle">Flowdeck</p>
+            </div>
+        </div>
+
+        <h1>Conectar con tu Core</h1>
+        <p class="hint">
+            Escribí la dirección de la máquina donde corre Deck.Api — la misma red local
+            que tu compu. La pairing key aparece en la consola de Deck.Api al arrancarlo,
+            o en el archivo <code>pairing.key</code>.
+        </p>
+
+        <EditForm Model="_form" OnValidSubmit="ConnectAsync">
+            <input @bind="_form.ServerUrl" placeholder="192.168.1.10:5210" class="field" />
+            <input @bind="_form.PairingKey" placeholder="pairing key" type="password" class="field" />
+            <button type="submit" class="primary-button" disabled="@(_connecting)">
+                @(_connecting ? "Conectando…" : "Conectar")
+            </button>
+        </EditForm>
+
+        @if (Connection.ConnectError is { } error)
+        {
+            <p class="error-box">@error</p>
+        }
+    </div>
+</div>
+
+@code {
+    private readonly FormModel _form = new();
+    private bool _connecting;
+
+    protected override void OnInitialized()
+    {
+        _form.ServerUrl = Preferences.Get(nameof(_form.ServerUrl), string.Empty);
+        _form.PairingKey = Preferences.Get(nameof(_form.PairingKey), string.Empty);
+
+        if (Connection.Phase == ConnectionPhase.Connected)
+        {
+            Nav.NavigateTo("/deck");
+        }
+    }
+
+    private async Task ConnectAsync()
+    {
+        _connecting = true;
+        await Connection.ConnectAsync(_form.ServerUrl, _form.PairingKey);
+        _connecting = false;
+
+        if (Connection.Phase == ConnectionPhase.Connected)
+        {
+            Preferences.Set(nameof(_form.ServerUrl), _form.ServerUrl);
+            Preferences.Set(nameof(_form.PairingKey), _form.PairingKey);
+            Nav.NavigateTo("/deck");
+        }
+    }
+
+    public void Dispose() { }
+
+    private sealed class FormModel
+    {
+        public string ServerUrl { get; set; } = "";
+        public string PairingKey { get; set; } = "";
+    }
+}

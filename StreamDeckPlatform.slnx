@@ -1,4 +1,15 @@
 <Solution>
+  <Folder Name="/Clients/">
+    <!-- Clients/WebDeck (Node) y Clients/MobileDeck (MAUI Blazor Hybrid, Android
+         por ahora) quedan fuera del .slnx a propósito: no son proyectos .NET
+         "normales" para el build de la solución — WebDeck no es .NET, y
+         MobileDeck necesita el workload maui-android instalado (no todos los
+         SO de CI lo tienen por default), se compila aparte en su propio paso
+         de CI. MobileDeck.Core (la lógica compartida, sin Android) sí es una
+         librería .NET común y entra acá como cualquier otra. -->
+    <Project Path="Clients/MobileDeck.Core.Tests/MobileDeck.Core.Tests.csproj" />
+    <Project Path="Clients/MobileDeck.Core/MobileDeck.Core.csproj" />
+  </Folder>
   <Folder Name="/Api/">
     <Project Path="Api/Deck.Api.Tests/Deck.Api.Tests.csproj" />
     <Project Path="Api/Deck.Api/Deck.Api.csproj" />

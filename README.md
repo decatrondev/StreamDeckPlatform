@@ -24,7 +24,8 @@ StreamDeckPlatform.sln
 │   └── Deck.Plugins.Twitch    → Fase 6, completo. MVP de plugins cerrado.
 └── Clients/
     ├── WebDeck                → React/Vite — Fase 7, completo.
-    └── MobileDeck              → Fase 8, todavía no arrancó.
+    ├── MobileDeck.Core        → Lógica compartida (.NET puro) del cliente móvil — Fase 8, completo.
+    └── MobileDeck              → MAUI Blazor Hybrid, solo Android por ahora — Fase 8, completo.
 ```
 
 **Regla dura:** ningún plugin referencia a otro plugin. Todo se comparte vía
@@ -252,6 +253,65 @@ Con esto se completan las Fases 0-6: Core, UI y los 4 plugins del MVP
   estado por vez (verificado a mano con Playwright, comparando el color de
   borde computado antes y después del fix).
 
+**Fase 8 — App móvil (Mobile Deck), completa (solo Android por ahora).**
+
+- Alcance decidido al arrancar la fase: **Blazor Hybrid** en vez de MAUI
+  nativo (reusa C#/Razor en vez de reescribir toda la UI dos veces), y
+  **solo Android** — este repo se desarrolla en un servidor Linux sin Xcode,
+  no hay forma real de compilar ni probar iOS/MacCatalyst acá. El
+  `TargetFrameworks` de `Clients/MobileDeck.csproj` queda documentado para
+  agregar esos targets de vuelta cuando haya una Mac disponible.
+- **Gap cerrado antes de arrancar esta fase:** el roadmap de la Fase 7 pedía
+  "autenticación de acceso a la API" y se había dejado afuera como
+  simplificación consciente — con Mobile Deck sumando otro cliente más a la
+  misma `Deck.Api`, se volvía más urgente. Ver pairing key más arriba.
+- `Clients/MobileDeck.Core`: librería .NET simple (sin dependencia de
+  Android) con `DeckApiClient` (REST), `DeckHubClient` (SignalR, con
+  `AccessTokenProvider` — a diferencia del navegador, el cliente .NET SÍ
+  puede mandar el header `Authorization` en el propio handshake de
+  WebSocket, no hace falta el truco de query string que usa Web Deck) y
+  `DeckNavigationStack` (misma idea que el `pageStack` de Web Deck, pero
+  como clase aparte para que sea testeable sin un componente Razor vivo).
+  DTOs propios, no compartidos con `Deck.Api.Dtos` — referenciarlo arrastraría
+  ASP.NET Core + EF Core + Sqlite al build de Android.
+- `Clients/MobileDeck.Core.Tests`: en vez de armar un servidor falso propio,
+  reusa el `WebApplicationFactory` real de `Deck.Api.Tests` — el "servidor
+  real" acá es literalmente `Deck.Api` corriendo en memoria. 11 tests:
+  ping público, perfiles con key correcta/incorrecta/ausente, traer una
+  página, conectar el hub con key correcta/incorrecta, ejecutar una acción
+  real vía hub, y la pila de navegación pura (push/pop/reset). Bug real
+  encontrado en el camino: dos clases de test usando `DeckApiFactory` a la
+  vez (`IClassFixture` por clase) hacían que xUnit las corriera en paralelo
+  por default, pisándose la variable de entorno que aísla la base de cada
+  una — mismo tipo de problema ya documentado en `Deck.Api.Tests`, acá
+  resuelto con `parallelizeTestCollections: false` en vez de fusionar las
+  clases, para que no vuelva a aparecer si se agregan más tests después.
+- `Clients/MobileDeck`: la app en sí — `DeckConnectionService` (singleton
+  inyectado, orquesta `DeckApiClient` + `DeckHubClient` + navegación, mismo
+  rol que `App.tsx` en Web Deck pero como servicio en vez de un componente
+  gigante) y dos páginas Razor (`Home` para conectar, `Deck` para la grilla),
+  CSS propio con los mismos tokens de marca — nada de Bootstrap (el template
+  por defecto de MAUI lo incluye, se sacó a propósito), ni sidebar ni navbar
+  genérica, pantalla completa como corresponde a una app de control remoto.
+- Sin emulador de Android corriendo en este servidor (necesitaría acceso a
+  `/dev/kvm` fuera del alcance de esta sesión) — la verificación real es:
+  1) el build compila limpio contra el SDK de Android instalado (workload
+  `maui-android` + `platforms;android-36` + `build-tools;36.0.0`), y 2) toda
+  la lógica de negocio (`DeckConnectionService` delega en `MobileDeck.Core`)
+  ya está probada de punta a punta contra `Deck.Api` real. Falta la
+  verificación visual en un dispositivo/emulador real — pendiente para
+  cuando el usuario tenga uno a mano.
+- Freemium (4 botones gratis / perfiles ilimitados premium, mencionado en el
+  roadmap) **no** se implementó a propósito en esta fase: no hay backend de
+  pagos/licencias todavía, es un proyecto aparte (IAP de las stores o
+  billing propio) que no tiene sentido meter a medias.
+- CI: job nuevo (`android`) en `.github/workflows/build.yml`, separado del
+  build normal de la solución — instala el SDK de Android + el workload
+  `maui-android` y compila `Clients/MobileDeck.csproj -f net10.0-android`.
+  Corre aparte porque no todos los runners de CI (Windows/macOS del build
+  normal) tienen el SDK de Android, y agregarlo ahí rompería esos jobs sin
+  necesidad.
+
 ## Build y tests
 
 ```bash
@@ -269,3 +329,15 @@ npm install
 npm run dev    # apunta a cualquier Deck.Api corriendo en la LAN
 npm run build
 ```
+
+`Clients/MobileDeck` (MAUI Blazor Hybrid, Android) necesita el workload
+`maui-android` y el SDK de Android instalados aparte — por eso queda fuera
+del `.slnx` y no entra en el `dotnet build` de arriba:
+
+```bash
+dotnet workload install maui-android
+dotnet build Clients/MobileDeck/MobileDeck.csproj -f net10.0-android
+```
+
+`Clients/MobileDeck.Core` (la lógica compartida, sin dependencia de Android)
+sí es parte de la solución normal y corre con el `dotnet test` de arriba.

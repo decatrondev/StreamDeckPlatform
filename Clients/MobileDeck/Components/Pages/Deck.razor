@@ -1,0 +1,121 @@
+@page "/deck"
+@using MobileDeck.Services
+@inject DeckConnectionService Connection
+@inject NavigationManager Nav
+@implements IDisposable
+
+@if (Connection.Phase != ConnectionPhase.Connected || Connection.CurrentPage is null)
+{
+    <div class="loading-screen">Cargando tu deck…</div>
+}
+else
+{
+    var currentPage = Connection.CurrentPage;
+
+    <div class="deck-screen">
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="status-dot @StatusDotClass()"></span>
+                <span class="status-label">@StatusLabel()</span>
+            </div>
+            <button class="text-button" @onclick="DisconnectAsync">Cambiar servidor</button>
+        </div>
+
+        <div class="breadcrumb-row">
+            @if (Connection.CanGoBack)
+            {
+                <button class="back-button" @onclick="GoBackAsync" aria-label="Volver">←</button>
+            }
+            <p class="breadcrumb">@Connection.Profile?.Name / @currentPage.Name</p>
+        </div>
+
+        <div class="deck-grid" style="grid-template-columns: repeat(@currentPage.Columns, 1fr);">
+            @for (var row = 0; row < currentPage.Rows; row++)
+            {
+                @for (var column = 0; column < currentPage.Columns; column++)
+                {
+                    var r = row;
+                    var c = column;
+                    var slot = currentPage.Buttons.FirstOrDefault(b => b.Row == r && b.Column == c);
+                    var key = $"{r}-{c}";
+
+                    <button
+                        class="deck-key @(slot is null ? "empty" : "") @(_pressedKey == key ? "pressed" : "") @(_failedKey == key ? "failed" : "")"
+                        disabled="@(slot is null)"
+                        @onclick="() => PressAsync(r, c)">
+                        @if (slot?.Type == ButtonSlotType.Folder)
+                        {
+                            <span class="folder-icon">📁</span>
+                        }
+                        @if (!string.IsNullOrEmpty(slot?.Label))
+                        {
+                            <span class="key-label">@slot.Label</span>
+                        }
+                    </button>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string? _pressedKey;
+    private string? _failedKey;
+
+    protected override void OnInitialized()
+    {
+        Connection.StateChanged += OnConnectionChanged;
+
+        if (Connection.Phase != ConnectionPhase.Connected)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private void OnConnectionChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task PressAsync(int row, int column)
+    {
+        var key = $"{row}-{column}";
+        _pressedKey = key;
+        StateHasChanged();
+
+        var success = await Connection.PressButtonAsync(row, column);
+
+        _pressedKey = null;
+        if (!success)
+        {
+            _failedKey = key;
+            StateHasChanged();
+            await Task.Delay(500);
+            _failedKey = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private Task GoBackAsync() => Connection.GoBackAsync();
+
+    private async Task DisconnectAsync()
+    {
+        await Connection.DisconnectAsync();
+        Nav.NavigateTo("/");
+    }
+
+    private string StatusDotClass() => Connection.HubStatus switch
+    {
+        HubConnectionStatus.Connected => "live",
+        HubConnectionStatus.Disconnected => "danger",
+        _ => "signal",
+    };
+
+    private string StatusLabel() => Connection.HubStatus switch
+    {
+        HubConnectionStatus.Connected => "En vivo",
+        HubConnectionStatus.Reconnecting => "Reconectando…",
+        HubConnectionStatus.Disconnected => "Sin conexión",
+        _ => "Conectando…",
+    };
+
+    public void Dispose() => Connection.StateChanged -= OnConnectionChanged;
+}

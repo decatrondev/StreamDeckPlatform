@@ -31,3 +31,32 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build --configuration Release
+
+  android:
+    # Clients/MobileDeck (MAUI Blazor Hybrid) queda fuera del .slnx a propósito
+    # (ver comentario ahí) — necesita el workload maui-android + Android SDK,
+    # que no todos los runners tienen por default, así que se compila en su
+    # propio job en vez de romper el build normal de la solución en Win/macOS.
+    # Solo Android por ahora: sin Xcode no hay forma de compilar iOS/MacCatalyst
+    # acá — se agrega de vuelta cuando haya un runner de macOS para ese target.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform + build-tools
+        run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install maui-android workload
+        run: dotnet workload install maui-android
+
+      - name: Build Clients/MobileDeck (Android)
+        run: dotnet build Clients/MobileDeck/MobileDeck.csproj -f net10.0-android --configuration Release
