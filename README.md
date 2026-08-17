@@ -201,25 +201,46 @@ Con esto se completan las Fases 0-6: Core, UI y los 4 plugins del MVP
 - Enums serializados como texto (`"Action"`, no `0`) tanto en REST como en el
   protocolo JSON de SignalR — el default de System.Text.Json es número crudo,
   forzaría a repetir el mapeo a mano del lado de TypeScript.
-- CORS abierto (`AllowAnyOrigin`, sin credenciales): no hay auth todavía y el
-  caso de uso real es que cualquier dispositivo de la LAN del usuario apunte
-  acá con una IP que ni siquiera se conoce de antemano — no tiene sentido una
-  lista fija de orígenes hasta que exista login.
+- CORS abierto (`AllowAnyOrigin`, sin credenciales): el control de acceso
+  real lo hace la pairing key (`Auth/`), no el origen — el caso de uso real
+  es que cualquier dispositivo de la LAN del usuario apunte acá con una IP
+  que ni siquiera se conoce de antemano, no tiene sentido una lista fija de
+  orígenes.
+- **Pairing key** (`Auth/PairingKey.cs`, `Auth/PairingKeyAuthenticationHandler.cs`):
+  cierra un gap real que había quedado abierto en la Fase 7 — su propio
+  roadmap pedía "autenticación de acceso a la API" y se había dejado sin auth
+  como simplificación consciente, hasta que Mobile Deck (Fase 8) iba a
+  consumir la misma API y hacía más urgente cerrarlo. Un secreto random por
+  instalación (`pairing.key`, mismo patrón que `credentials.key` de Fase 1:
+  se genera una vez, permisos restringidos, vive fuera de la base) que hay
+  que mandar como `Authorization: Bearer <key>` en REST o `?access_token=`
+  en el handshake de SignalR (el navegador no puede setear headers custom en
+  un WebSocket, así que el cliente JS lo manda por query string — el handler
+  acepta cualquiera de los dos). `AuthorizationPolicyBuilder.FallbackPolicy`
+  en vez de `[Authorize]` por controller: un endpoint nuevo queda protegido
+  por default aunque alguien se olvide del atributo, hay que optar
+  explícitamente por público con `.AllowAnonymous()` (el único caso es
+  `/api/ping`, sin key a propósito — así el cliente puede distinguir
+  "dirección equivocada" de "key equivocada" en la pantalla de conexión).
+  Comparación en tiempo constante (`CryptographicOperations.FixedTimeEquals`)
+  para no filtrar la key por timing.
 - `Deck.Api.Tests`: `WebApplicationFactory` + cliente real de SignalR
-  (`Microsoft.AspNetCore.SignalR.Client`) contra un `TestServer` real — 9
-  tests cubriendo CRUD de perfiles/páginas/botones, la validación Action XOR
-  Folder, ejecución real de una acción del plugin de sistema vía hub,
-  navegación por carpeta sin ejecutar nada, un slot vacío que falla prolijo,
-  y el broadcast de un evento de plugin a dos clientes conectados a la vez.
-  La variable de entorno `Deck:DatabasePath` (la única forma de aislar la
-  base antes de que `Program.cs` arranque el Core, que pasa antes de que
-  `WithWebHostBuilder` pueda inyectar overrides) obliga a que todos los tests
-  vivan en una sola clase con un solo `IClassFixture` — dos factories en
-  paralelo se pisarían la variable entre sí.
+  (`Microsoft.AspNetCore.SignalR.Client`) contra un `TestServer` real — 13
+  tests: CRUD de perfiles/páginas/botones, la validación Action XOR Folder,
+  ejecución real de una acción del plugin de sistema vía hub, navegación por
+  carpeta sin ejecutar nada, un slot vacío que falla prolijo, el broadcast de
+  un evento de plugin a dos clientes conectados a la vez, y la pairing key
+  (rechazo sin key, con key incorrecta, y que `/api/ping` sea la única
+  excepción pública). La variable de entorno `Deck:DatabasePath` (la única
+  forma de aislar la base antes de que `Program.cs` arranque el Core, que
+  pasa antes de que `WithWebHostBuilder` pueda inyectar overrides) obliga a
+  que todos los tests vivan en una sola clase con un solo `IClassFixture` —
+  dos factories en paralelo se pisarían la variable entre sí.
 - `Clients/WebDeck`: React 19 + Vite + Tailwind v4, mismos tokens de marca
   que `flowdeck.decatron.net` (grafito/azul/ámbar). Pantalla de conexión que
-  pide la IP:puerto del Deck.Api (persistida en `localStorage`, nadie en la
-  vida real va a escribir el esquema completo desde el celular), grilla de
+  pide la IP:puerto del Deck.Api y la pairing key (ambas persistidas en
+  `localStorage`, nadie en la vida real va a escribir el esquema completo
+  desde el celular ni repetir la key cada vez), grilla de
   botones con navegación por carpetas (breadcrumb + volver), feedback visual
   inmediato al presionar (borde de éxito/error) y barra de estado con el
   estado de cada plugin en vivo vía el broadcast de SignalR.

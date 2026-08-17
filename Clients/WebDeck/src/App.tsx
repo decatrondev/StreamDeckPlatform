@@ -6,10 +6,12 @@ import { api, ApiError, normalizeBaseUrl } from "./lib/api"
 import { connectToDeckHub, type DeckHubHandle, type HubConnectionStatus } from "./lib/hub"
 import type { Page, Plugin, Profile } from "./lib/types"
 
-const STORAGE_KEY = "webdeck.serverUrl"
+const SERVER_STORAGE_KEY = "webdeck.serverUrl"
+const PAIRING_KEY_STORAGE_KEY = "webdeck.pairingKey"
 
 export default function App() {
-  const [baseUrl, setBaseUrl] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY))
+  const [baseUrl, setBaseUrl] = useState<string | null>(() => localStorage.getItem(SERVER_STORAGE_KEY))
+  const [pairingKey, setPairingKey] = useState<string | null>(() => localStorage.getItem(PAIRING_KEY_STORAGE_KEY))
   const [connectError, setConnectError] = useState<string | null>(null)
 
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -23,17 +25,17 @@ export default function App() {
   const currentPage = pageStack.at(-1) ?? null
 
   useEffect(() => {
-    if (!baseUrl) return
+    if (!baseUrl || !pairingKey) return
 
     let cancelled = false
 
-    async function boot(url: string) {
+    async function boot(url: string, key: string) {
       try {
-        const profiles = await api.getProfiles(url)
+        const profiles = await api.getProfiles(url, key)
         const active = profiles[0]
         if (!active) throw new Error("El Core no tiene ningún perfil todavía.")
 
-        const rootPage = await api.getPage(url, active.rootPageId)
+        const rootPage = await api.getPage(url, key, active.rootPageId)
         if (cancelled) return
 
         setProfile(active)
@@ -41,53 +43,61 @@ export default function App() {
         setConnectError(null)
 
         const refreshPlugins = () =>
-          fetch(`${url}/api/plugins`)
+          fetch(`${url}/api/plugins`, { headers: { Authorization: `Bearer ${key}` } })
             .then((r) => r.json())
             .then((p: Plugin[]) => !cancelled && setPlugins(p))
             .catch(() => {})
 
         refreshPlugins()
-        hubRef.current = connectToDeckHub(url, setStatus, () => refreshPlugins())
+        hubRef.current = connectToDeckHub(url, key, setStatus, () => refreshPlugins())
         await hubRef.current.whenConnected
         if (cancelled) return
         hubRef.current.setActivePage(active.id, rootPage.id)
       } catch (err) {
         if (cancelled) return
-        const message = err instanceof ApiError
-          ? `No se pudo hablar con el Core (${err.status}). ¿La dirección es correcta?`
-          : "No se pudo conectar. Revisá que Deck.Api esté corriendo en esa dirección."
+        const message = err instanceof ApiError && err.status === 401
+          ? "Pairing key incorrecta."
+          : err instanceof ApiError
+            ? `No se pudo hablar con el Core (${err.status}). ¿La dirección es correcta?`
+            : "No se pudo conectar. Revisá que Deck.Api esté corriendo en esa dirección."
         setConnectError(message)
         setBaseUrl(null)
+        setPairingKey(null)
       }
     }
 
-    void boot(baseUrl)
+    void boot(baseUrl, pairingKey)
 
     return () => {
       cancelled = true
       hubRef.current?.stop()
       hubRef.current = null
     }
-  }, [baseUrl])
+  }, [baseUrl, pairingKey])
 
-  function handleConnect(rawInput: string) {
-    const normalized = normalizeBaseUrl(rawInput)
-    if (!normalized) return
-    localStorage.setItem(STORAGE_KEY, normalized)
+  function handleConnect(rawServerUrl: string, rawPairingKey: string) {
+    const normalized = normalizeBaseUrl(rawServerUrl)
+    const key = rawPairingKey.trim()
+    if (!normalized || !key) return
+    localStorage.setItem(SERVER_STORAGE_KEY, normalized)
+    localStorage.setItem(PAIRING_KEY_STORAGE_KEY, key)
     setBaseUrl(normalized)
+    setPairingKey(key)
   }
 
   function handleDisconnect() {
     hubRef.current?.stop()
     hubRef.current = null
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(SERVER_STORAGE_KEY)
+    localStorage.removeItem(PAIRING_KEY_STORAGE_KEY)
     setBaseUrl(null)
+    setPairingKey(null)
     setProfile(null)
     setPageStack([])
   }
 
   async function handlePress(row: number, column: number) {
-    if (!currentPage || !hubRef.current || !baseUrl) return
+    if (!currentPage || !hubRef.current || !baseUrl || !pairingKey) return
 
     const key = `${row}-${column}`
     setPressedKey(key)
@@ -96,7 +106,7 @@ export default function App() {
     const result = await hubRef.current.executeButton(currentPage.id, row, column)
 
     if (result.navigatedToPageId) {
-      const nextPage = await api.getPage(baseUrl, result.navigatedToPageId)
+      const nextPage = await api.getPage(baseUrl, pairingKey, result.navigatedToPageId)
       setPageStack((stack) => [...stack, nextPage])
       if (profile) hubRef.current.setActivePage(profile.id, nextPage.id)
       return
@@ -116,10 +126,11 @@ export default function App() {
     if (profile && target) hubRef.current?.setActivePage(profile.id, target.id)
   }
 
-  if (!baseUrl) {
+  if (!baseUrl || !pairingKey) {
     return (
       <ConnectScreen
-        initialValue={localStorage.getItem(STORAGE_KEY) ?? ""}
+        initialServerUrl={localStorage.getItem(SERVER_STORAGE_KEY) ?? ""}
+        initialPairingKey={localStorage.getItem(PAIRING_KEY_STORAGE_KEY) ?? ""}
         onConnect={handleConnect}
         error={connectError}
       />

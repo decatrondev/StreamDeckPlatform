@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,6 +28,7 @@ public class DeckApiTests : IClassFixture<DeckApiFactory>, IAsyncLifetime
     public Task InitializeAsync()
     {
         _client = _factory.CreateClient();
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", _factory.PairingKey);
         return Task.CompletedTask;
     }
 
@@ -34,6 +36,45 @@ public class DeckApiTests : IClassFixture<DeckApiFactory>, IAsyncLifetime
     {
         _client.Dispose();
         return Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task GetProfiles_WithoutPairingKey_IsRejected()
+    {
+        using var anonymousClient = _factory.CreateClient();
+
+        var response = await anonymousClient.GetAsync("/api/profiles");
+
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetProfiles_WithWrongPairingKey_IsRejected()
+    {
+        using var wrongKeyClient = _factory.CreateClient();
+        wrongKeyClient.DefaultRequestHeaders.Authorization = new("Bearer", "no-es-la-key-correcta");
+
+        var response = await wrongKeyClient.GetAsync("/api/profiles");
+
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Ping_DoesNotRequirePairingKey()
+    {
+        using var anonymousClient = _factory.CreateClient();
+
+        var response = await anonymousClient.GetAsync("/api/ping");
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    [Fact]
+    public async Task Hub_WithWrongPairingKey_FailsToConnect()
+    {
+        await using var connection = BuildHubConnection(pairingKeyOverride: "no-es-la-key-correcta");
+
+        await Assert.ThrowsAnyAsync<Exception>(() => connection.StartAsync());
     }
 
     [Fact]
@@ -192,11 +233,12 @@ public class DeckApiTests : IClassFixture<DeckApiFactory>, IAsyncLifetime
         return (await response.Content.ReadFromJsonAsync<PageDto>(JsonOptions))!;
     }
 
-    private HubConnection BuildHubConnection() =>
+    private HubConnection BuildHubConnection(string? pairingKeyOverride = null) =>
         new HubConnectionBuilder()
             .WithUrl(new Uri(_factory.Server.BaseAddress, "/hubs/deck"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
+                options.AccessTokenProvider = () => Task.FromResult<string?>(pairingKeyOverride ?? _factory.PairingKey);
             })
             .Build();
 

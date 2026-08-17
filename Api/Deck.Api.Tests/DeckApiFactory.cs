@@ -1,6 +1,8 @@
+using Deck.Api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Deck.Api.Tests;
 
@@ -18,6 +20,8 @@ public sealed class DeckApiFactory : WebApplicationFactory<Program>
     private readonly string _tempDir = Path.Combine(Path.GetTempPath(), $"deck-api-tests-{Guid.NewGuid():N}");
 
     public string DbPath { get; }
+
+    public string PairingKey => Services.GetRequiredService<DeckApiHost>().PairingKey;
 
     public DeckApiFactory()
     {

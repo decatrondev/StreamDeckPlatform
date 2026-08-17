@@ -13,14 +13,22 @@ export interface DeckHubHandle {
 
 export function connectToDeckHub(
   baseUrl: string,
+  pairingKey: string,
   onStatusChange: (status: HubConnectionStatus) => void,
   onPluginEvent: (event: PluginEventMessage) => void,
 ): DeckHubHandle {
   const connection = new signalR.HubConnectionBuilder()
-    // Sin cookies de por medio (no hay auth todavía): withCredentials=false
-    // matches la política CORS permisiva del lado del servidor — un origin
-    // "*" con credenciales incluidas, el browser lo rechaza directamente.
-    .withUrl(`${baseUrl}/hubs/deck?clientType=WebDeck`, { withCredentials: false })
+    .withUrl(`${baseUrl}/hubs/deck?clientType=WebDeck`, {
+      // Sin cookies de por medio: withCredentials=false matches la política
+      // CORS permisiva del lado del servidor — un origin "*" con credenciales
+      // incluidas, el browser lo rechaza directamente. El control de acceso
+      // real es accessTokenFactory: el cliente JS de SignalR no puede setear
+      // headers custom en el handshake de WebSocket, así que lo manda como
+      // query string ?access_token=... (el servidor lo acepta ahí, ver
+      // PairingKeyAuthenticationHandler).
+      withCredentials: false,
+      accessTokenFactory: () => pairingKey,
+    })
     .withAutomaticReconnect([0, 1000, 3000, 5000, 5000])
     .build()
 

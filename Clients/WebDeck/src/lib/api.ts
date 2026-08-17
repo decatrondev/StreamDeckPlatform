@@ -8,8 +8,10 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(baseUrl: string, path: string): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`)
+async function request<T>(baseUrl: string, pairingKey: string, path: string): Promise<T> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    headers: { Authorization: `Bearer ${pairingKey}` },
+  })
   if (!response.ok) {
     throw new ApiError(response.status, `${response.status} ${response.statusText} — ${path}`)
   }
@@ -17,8 +19,18 @@ async function request<T>(baseUrl: string, path: string): Promise<T> {
 }
 
 export const api = {
-  getProfiles: (baseUrl: string) => request<Profile[]>(baseUrl, "/api/profiles"),
-  getPage: (baseUrl: string, pageId: string) => request<Page>(baseUrl, `/api/pages/${pageId}`),
+  ping: async (baseUrl: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${baseUrl}/api/ping`)
+      return response.ok
+    } catch {
+      return false
+    }
+  },
+  getProfiles: (baseUrl: string, pairingKey: string) =>
+    request<Profile[]>(baseUrl, pairingKey, "/api/profiles"),
+  getPage: (baseUrl: string, pairingKey: string, pageId: string) =>
+    request<Page>(baseUrl, pairingKey, `/api/pages/${pageId}`),
 }
 
 // Normaliza lo que el usuario tipea ("192.168.1.10:5210", "localhost:5210/",

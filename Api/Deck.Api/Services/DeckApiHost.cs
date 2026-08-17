@@ -1,3 +1,4 @@
+using Deck.Api.Auth;
 using Deck.Core.Credentials;
 using Deck.Core.Data;
 using Deck.Core.Execution;
@@ -29,17 +30,20 @@ public sealed class DeckApiHost : IAsyncDisposable
     public IDbContextFactory<DeckDbContext> DbFactory { get; }
     public PluginManager Plugins { get; }
     public ActionExecutor Executor { get; }
+    public string PairingKey { get; }
 
-    private DeckApiHost(IDbContextFactory<DeckDbContext> dbFactory, PluginManager plugins, ActionExecutor executor)
+    private DeckApiHost(IDbContextFactory<DeckDbContext> dbFactory, PluginManager plugins, ActionExecutor executor, string pairingKey)
     {
         DbFactory = dbFactory;
         Plugins = plugins;
         Executor = executor;
+        PairingKey = pairingKey;
     }
 
     public static async Task<DeckApiHost> StartAsync(string sqliteFilePath, ILoggerFactory loggerFactory)
     {
         var options = DeckDb.CreateOptions(sqliteFilePath);
+        var dataDirectory = Path.GetDirectoryName(sqliteFilePath)!;
 
         using (var migrationDb = new DeckDbContext(options))
         {
@@ -52,15 +56,16 @@ public sealed class DeckApiHost : IAsyncDisposable
         var credentialsDb = new DeckDbContext(options);
         var credentials = new SqliteCredentialManager(
             credentialsDb,
-            CredentialEncryptionKey.LoadOrCreate(
-                Path.Combine(Path.GetDirectoryName(sqliteFilePath)!, "credentials.key")));
+            CredentialEncryptionKey.LoadOrCreate(Path.Combine(dataDirectory, "credentials.key")));
 
         var plugins = new PluginManager(credentials, loggerFactory);
         var systemPlugin = plugins.LoadInstance(new SystemActionsPlugin());
         await plugins.InitializeAsync(systemPlugin.Metadata.Id);
         await plugins.ConnectAsync(systemPlugin.Metadata.Id);
 
-        return new DeckApiHost(dbFactory, plugins, new ActionExecutor(plugins));
+        var pairingKey = Auth.PairingKey.LoadOrCreate(Path.Combine(dataDirectory, "pairing.key"));
+
+        return new DeckApiHost(dbFactory, plugins, new ActionExecutor(plugins), pairingKey);
     }
 
     private static async Task SeedIfEmptyAsync(DeckDbContext db)

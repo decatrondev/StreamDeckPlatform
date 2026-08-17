@@ -1,13 +1,15 @@
 import { useState } from "react"
 
 interface Props {
-  initialValue: string
-  onConnect: (baseUrl: string) => void
+  initialServerUrl: string
+  initialPairingKey: string
+  onConnect: (baseUrl: string, pairingKey: string) => void
   error: string | null
 }
 
-export function ConnectScreen({ initialValue, onConnect, error }: Props) {
-  const [value, setValue] = useState(initialValue)
+export function ConnectScreen({ initialServerUrl, initialPairingKey, onConnect, error }: Props) {
+  const [serverUrl, setServerUrl] = useState(initialServerUrl)
+  const [pairingKey, setPairingKey] = useState(initialPairingKey)
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-graphite px-6">
@@ -28,21 +30,30 @@ export function ConnectScreen({ initialValue, onConnect, error }: Props) {
         <h1 className="mb-2 font-display text-2xl font-semibold text-ink">Conectar con tu Core</h1>
         <p className="mb-6 text-sm leading-relaxed text-ink-muted">
           Escribí la dirección de la máquina donde corre Deck.Api — la misma red local
-          que tu compu, sin instalar nada acá.
+          que tu compu, sin instalar nada acá. La pairing key aparece en la consola de
+          Deck.Api al arrancarlo, o en el archivo{" "}
+          <code className="font-mono text-ink-muted">pairing.key</code>.
         </p>
 
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            onConnect(value)
+            onConnect(serverUrl, pairingKey)
           }}
           className="flex flex-col gap-3"
         >
           <input
             autoFocus
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
+            value={serverUrl}
+            onChange={(e) => setServerUrl(e.target.value)}
             placeholder="192.168.1.10:5210"
+            className="rounded-lg border border-line bg-surface px-4 py-3 font-mono text-sm text-ink outline-none placeholder:text-ink-faint focus:border-accent"
+          />
+          <input
+            value={pairingKey}
+            onChange={(e) => setPairingKey(e.target.value)}
+            placeholder="pairing key"
+            type="password"
             className="rounded-lg border border-line bg-surface px-4 py-3 font-mono text-sm text-ink outline-none placeholder:text-ink-faint focus:border-accent"
           />
           <button
