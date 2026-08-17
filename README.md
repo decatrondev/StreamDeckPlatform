@@ -19,8 +19,8 @@ StreamDeckPlatform.sln
 ├── Device/Deck.Device        → Comunicación con hardware físico (HID/Serial/BLE)
 ├── Plugins/
 │   ├── Deck.Plugins.Obs       → Fase 3, completo.
-│   └── Deck.Plugins.Spotify   → Fase 4, completo. Discord y Twitch se agregan
-│                                uno a la vez, en su fase correspondiente.
+│   ├── Deck.Plugins.Spotify   → Fase 4, completo.
+│   └── Deck.Plugins.Discord   → Fase 5, completo. Twitch se agrega en su fase.
 └── Clients/                  → WebDeck y MobileDeck (Fase 7-8, todavía no arrancaron)
 ```
 
@@ -117,7 +117,30 @@ StreamDeckPlatform.sln
   las 4 acciones de reproducción + volumen, expiración de token a mitad de
   sesión, y el evento de cambio de canción.
 
-Siguiente: Fase 5 — Plugin #3: Discord (alcance por definir: ¿bot, webhook o Rich Presence?).
+**Fase 5 — Plugin #3: Discord, completa.**
+
+- Alcance resuelto: **RPC local del cliente de Discord** — mismo patrón
+  arquitectónico que OBS (proceso local hablando un protocolo propio), pero
+  transporte totalmente distinto: named pipe en Windows
+  (`\\.\pipe\discord-ipc-N`), socket de dominio Unix en Linux/macOS
+  (`$XDG_RUNTIME_DIR/discord-ipc-N`). Valida que el patrón de Fase 1 no asume
+  ningún transporte en particular — ni WebSocket (OBS) ni HTTPS (Spotify).
+- RPC no puede enviar mensajes de texto a un canal (fuera de su alcance) — se
+  resolvió con un webhook opcional guardado vía Credential Manager, tercera
+  forma de credencial distinta (contraseña simple → OAuth refresh_token →
+  URL de webhook).
+- Acciones: mutear/desmutear (toggle real, vía `GET_VOICE_SETTINGS` +
+  `SET_VOICE_SETTINGS`), cambiar de canal de voz (`SELECT_VOICE_CHANNEL`),
+  enviar mensaje rápido (webhook).
+- Evento `voice-state-update` relayado como `PluginEvent`, más
+  `connection-state` para reflejar conectado/reconectando en la UI.
+- Reconexión automática propia ante cierre de Discord, mismo criterio que OBS.
+- `Deck.Plugins.Discord.Tests`: servidor IPC falso propio (named pipe/socket
+  Unix real, mismo framing binario que Discord) — 9 tests cubriendo handshake,
+  toggle de mute, cambio de canal, comando rechazado, webhook configurado/sin
+  configurar, relay de eventos y reconexión automática tras una caída.
+
+Siguiente: Fase 6 — Plugin #4: Twitch (OAuth + EventSub, cierra el MVP de plugins).
 
 ## Build y tests
 
