@@ -36,15 +36,31 @@ StreamDeckPlatform.sln
 
 ## Estado actual
 
-**Fase 0 — Setup y fundaciones.** Estructura de solución y modelo de datos
-inicial (`Deck.Core/Model/`). Sin funcionalidad todavía — ver `CONVENTIONS.md`
-para las reglas de código y el panel de admin de Flowdeck para el roadmap
-completo (Fases 1-12).
+**Fase 1 — Core, completa.**
 
-## Build
+- `Deck.SDK`: contrato `IPlugin` (ciclo de vida, acciones, eventos), pensado
+  para validarse con el primer plugin real en Fase 3 (OBS).
+- `Deck.Core/Plugins`: `PluginManager` — carga dinámica de `.dll` vía
+  `AssemblyLoadContext` coleccionable (se puede descargar en caliente),
+  aislamiento de errores (ningún fallo de plugin llega a tumbar el proceso).
+- `Deck.Core/Execution`: `ActionExecutor` — corre la lista ordenada de
+  `ActionStep` de un botón o trigger; se corta en el primer paso que falla.
+- `Deck.Core/Credentials`: Credential Manager real, SQLite + AES-256-GCM, cada
+  plugin ve solo su propio namespace de credenciales.
+- `Deck.Core/Data`: persistencia SQLite (EF Core) de perfiles, páginas,
+  botones, pasos de acción y triggers.
+- `Deck.Core.Tests`: 15 tests cubriendo lifecycle de plugin, ejecución de
+  acciones falsas (abrir app / correr comando, con un plugin mock), carga
+  dinámica real de un `.dll` separado, aislamiento de errores, cifrado de
+  credenciales y round-trip de SQLite (incluye carpetas anidadas).
+
+Siguiente: Fase 2 — UI Virtual Deck (Avalonia).
+
+## Build y tests
 
 ```bash
 dotnet build
+dotnet test
 ```
 
 Requiere .NET SDK 10.0.

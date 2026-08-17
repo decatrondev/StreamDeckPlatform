@@ -6,6 +6,8 @@
     <Project Path="Contracts/Deck.SDK/Deck.SDK.csproj" />
   </Folder>
   <Folder Name="/Core/">
+    <Project Path="Core/Deck.Core.Tests.FakePlugin/Deck.Core.Tests.FakePlugin.csproj" />
+    <Project Path="Core/Deck.Core.Tests/Deck.Core.Tests.csproj" />
     <Project Path="Core/Deck.Core/Deck.Core.csproj" />
   </Folder>
   <Folder Name="/Device/">
