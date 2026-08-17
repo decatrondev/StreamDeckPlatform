@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using Deck.UI.Avalonia.Services;
 using Velopack;
 
 namespace Deck.UI.Avalonia;
@@ -18,6 +19,12 @@ sealed class Program
         // momentos del ciclo de vida (sobre todo en Windows). Si algo más
         // corre antes, esos hooks nunca se disparan.
         VelopackApp.Build().Run();
+
+        // Después de Velopack (esos argumentos internos del updater no
+        // cuentan como "el usuario abrió la app dos veces") pero antes de
+        // construir cualquier ventana — si ya hay una instancia corriendo,
+        // esta ni siquiera debe llegar a inicializar Avalonia.
+        if (!SingleInstanceGuard.TryAcquire()) return;
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);

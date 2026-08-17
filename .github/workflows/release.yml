@@ -75,6 +75,24 @@ jobs:
           --icon ${{ matrix.icon }}
           -y
 
+      # El Setup.exe que genera vpk es el instalador real de Velopack — funciona
+      # bien pero muestra su propia ventana genérica ("Instalación de
+      # Flowdeck / Instalando... / Configurando..."). Deck.UI.Installer es un
+      # bootstrap propio: lo embebe y lo corre en modo silencioso, así el
+      # usuario solo ve nuestra marca. Por dentro sigue siendo el mismo motor
+      # de Velopack (delta-updates, RELEASES, todo eso no se toca).
+      - name: Empaquetar instalador propio (solo Windows)
+        if: matrix.channel == 'win'
+        shell: bash
+        run: |
+          cp releases/win/Flowdeck-win-Setup.exe UI/Deck.UI.Installer/SetupInner.exe
+          dotnet publish UI/Deck.UI.Installer/Deck.UI.Installer.csproj \
+            -c Release -r win-x64 --self-contained \
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+            -o publish-installer
+          cp publish-installer/Flowdeck-Setup.exe releases/win/Flowdeck-Setup.exe
+          rm releases/win/Flowdeck-win-Setup.exe
+
       # Sin firma de código todavía (Windows/macOS piden certificado pago) —
       # el usuario va a ver la advertencia estándar de "editor desconocido" al
       # instalar hasta que eso se resuelva. Documentado, no bloqueante para

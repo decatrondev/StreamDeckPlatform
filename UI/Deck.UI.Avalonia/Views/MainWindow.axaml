@@ -11,6 +11,7 @@
         Width="960" Height="620" MinWidth="720" MinHeight="480"
         Background="{StaticResource FlowdeckGraphiteBrush}"
         ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="None"
         ExtendClientAreaTitleBarHeightHint="-1">
 
     <Design.DataContext>
@@ -110,7 +111,13 @@
                                     Classes.Folder="{Binding IsFolder}"
                                     Command="{Binding ActivateCommand}"
                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                    Margin="5" Height="90">
+                                    Margin="5" MinHeight="72">
+                                <Button.ContextMenu>
+                                    <ContextMenu IsEnabled="{Binding IsAssigned}">
+                                        <MenuItem Header="Editar" Command="{Binding EditCommand}" />
+                                        <MenuItem Header="Quitar" Command="{Binding ClearCommand}" />
+                                    </ContextMenu>
+                                </Button.ContextMenu>
                                 <StackPanel Spacing="4" HorizontalAlignment="Center">
                                     <TextBlock Text="{Binding StatusGlyph}" HorizontalAlignment="Center"
                                                Foreground="{StaticResource FlowdeckAccentLightBrush}" />

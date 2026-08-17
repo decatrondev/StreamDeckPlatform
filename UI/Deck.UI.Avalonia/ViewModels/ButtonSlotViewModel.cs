@@ -32,14 +32,20 @@ public partial class ButtonSlotViewModel : ViewModelBase
     public string StatusGlyph => IsRunning ? "…" : IsFolder ? "▸" : "";
 
     public IAsyncRelayCommand ActivateCommand { get; }
+    public IAsyncRelayCommand EditCommand { get; }
+    public IAsyncRelayCommand ClearCommand { get; }
 
     public event Func<ButtonSlotViewModel, Task>? Activated;
+    public event Func<ButtonSlotViewModel, Task>? EditRequested;
+    public event Func<ButtonSlotViewModel, Task>? ClearRequested;
 
     public ButtonSlotViewModel(int row, int column, ButtonSlot? slot)
     {
         Row = row;
         Column = column;
         ActivateCommand = new AsyncRelayCommand(() => Activated?.Invoke(this) ?? Task.CompletedTask);
+        EditCommand = new AsyncRelayCommand(() => EditRequested?.Invoke(this) ?? Task.CompletedTask, () => IsAssigned);
+        ClearCommand = new AsyncRelayCommand(() => ClearRequested?.Invoke(this) ?? Task.CompletedTask, () => IsAssigned);
         Apply(slot);
     }
 
@@ -49,5 +55,7 @@ public partial class ButtonSlotViewModel : ViewModelBase
         Label = slot?.Label;
         IsFolder = slot?.Type == ButtonSlotType.Folder;
         OnPropertyChanged(nameof(IsAssigned));
+        EditCommand.NotifyCanExecuteChanged();
+        ClearCommand.NotifyCanExecuteChanged();
     }
 }

@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
@@ -25,10 +26,22 @@ public partial class App : Application
             var mainViewModel = new MainViewModel(app);
             mainViewModel.InitializeAsync().GetAwaiter().GetResult();
 
-            desktop.MainWindow = new MainWindow
+            var mainWindow = new MainWindow
             {
                 DataContext = mainViewModel,
             };
+            desktop.MainWindow = mainWindow;
+
+            // Si el usuario intenta abrir Flowdeck de nuevo mientras ya está
+            // abierto, SingleInstanceGuard cierra el proceso nuevo y nos
+            // avisa acá — la pedimos maximizada porque es la forma más obvia
+            // de que quede claro que "ya está abierta, acá está".
+            SingleInstanceGuard.ListenForActivationRequests(() =>
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mainWindow.WindowState = WindowState.Maximized;
+                    mainWindow.Activate();
+                }));
 
             // En background: no hay razón para demorar la ventana esperando a
             // GitHub. Si hay una actualización, se descarga sola y se aplica

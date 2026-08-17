@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Reemplaza la ventana genérica de Velopack ("Instalación de Flowdeck /
+    Instalando... / Configurando...") por una propia. Por dentro sigue
+    corriendo el Setup.exe real que genera vpk (Velopack resuelve
+    delta-updates, RELEASES, .nupkg, todo lo difícil) — pero embebido e
+    invocado en modo silencioso, así el usuario nunca ve esa ventana.
+
+    Solo tiene sentido en Windows: Setup.pkg de macOS usa el instalador
+    nativo de Apple (esperado ahí) y el .AppImage de Linux no tiene paso de
+    instalación en absoluto.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- Permite compilar este proyecto (solo compilar, no correr) desde
+         Linux/macOS — el runner de CI para Windows no lo necesita, pero sin
+         esto no se puede ni siquiera validar que compila fuera de Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>Flowdeck-Setup</AssemblyName>
+    <ApplicationIcon>..\Deck.UI.Avalonia\Assets\flowdeck.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SetupInner.exe lo copia el pipeline de release (ver release.yml) desde
+         lo que generó "vpk pack" antes de publicar este proyecto — no existe
+         en el repo, así que no falla el build local si falta: sin él, el
+         bootstrap simplemente no tiene nada para embeber (ver chequeo en
+         Program.cs). -->
+    <EmbeddedResource Include="SetupInner.exe" Condition="Exists('SetupInner.exe')" />
+  </ItemGroup>
+
+</Project>

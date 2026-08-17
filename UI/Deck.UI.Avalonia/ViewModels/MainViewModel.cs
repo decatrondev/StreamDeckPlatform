@@ -135,9 +135,32 @@ public partial class MainViewModel : ViewModelBase
                 var slot = slots.FirstOrDefault(s => s.Row == row && s.Column == col);
                 var vm = new ButtonSlotViewModel(row, col, slot);
                 vm.Activated += OnButtonActivatedAsync;
+                vm.EditRequested += button =>
+                {
+                    OpenAssignDialog(button);
+                    return Task.CompletedTask;
+                };
+                vm.ClearRequested += OnButtonClearRequestedAsync;
                 Buttons.Add(vm);
             }
         }
+    }
+
+    // Vacía una tecla ya asignada (y, si era carpeta, deja la página hija
+    // huérfana sin borrarla — perder el contenido de una carpeta sin avisar
+    // sería peor que dejar basura desreferenciada).
+    private async Task OnButtonClearRequestedAsync(ButtonSlotViewModel button)
+    {
+        if (button.Slot is null) return;
+
+        var steps = await _app.Db.ActionSteps
+            .Where(a => a.ButtonSlotId == button.Slot.Id)
+            .ToListAsync();
+        _app.Db.ActionSteps.RemoveRange(steps);
+        _app.Db.ButtonSlots.Remove(button.Slot);
+        await _app.Db.SaveChangesAsync();
+
+        button.Apply(null);
     }
 
     private async Task OnButtonActivatedAsync(ButtonSlotViewModel button)
@@ -189,6 +212,18 @@ public partial class MainViewModel : ViewModelBase
         Dialog = null;
 
         if (result is null || CurrentPage is null) return;
+
+        // Reasignar una tecla que ya tenía algo: se borra lo viejo antes de
+        // crear lo nuevo, para no dejar una fila huérfana en la misma
+        // posición (Row, Column).
+        if (button.Slot is not null)
+        {
+            var oldSteps = await _app.Db.ActionSteps
+                .Where(a => a.ButtonSlotId == button.Slot.Id)
+                .ToListAsync();
+            _app.Db.ActionSteps.RemoveRange(oldSteps);
+            _app.Db.ButtonSlots.Remove(button.Slot);
+        }
 
         if (result.Mode == AssignMode.Folder)
         {
