@@ -152,22 +152,29 @@ public class SpotifyPluginTests : IAsyncLifetime
     public async Task PluginEvent_TrackChanged_IsRaisedWhenTrackDiffers()
     {
         _server.CurrentlyPlayingTrackId = "track-A";
+
+        // Suscribirse ANTES de arrancar el polling — así no importa cuándo
+        // dispare el primer tick (es casi inmediato), nunca se pierde. Contra
+        // eso mismo fallaba antes: esperar a que el SERVIDOR reciba el primer
+        // pedido no alcanza, el CLIENTE todavía puede tardar en procesar la
+        // respuesta y disparar el evento después de que el test ya miró.
+        var events = new List<PluginEvent>();
+        _plugin.EventRaised += (_, e) => { if (e.EventId == "track-changed") events.Add(e); };
+
         await AuthorizeAsync(); // arranca el polling
 
-        PluginEvent? received = null;
-        _plugin.EventRaised += (_, e) => { if (e.EventId == "track-changed") received ??= e; };
+        var gotFirstTick = await PollUntilAsync(() => events.Count >= 1, timeoutMs: 5000);
+        Assert.True(gotFirstTick, "El plugin nunca hizo el primer poll de currently-playing.");
 
-        // Cambia lo que "está sonando" en el servidor falso — el próximo tick
-        // de polling (cada 5s en producción; acá el test espera lo que haga
-        // falta) tiene que notar la diferencia.
-        await Task.Delay(200);
+        // Recién ahora cambiamos lo que "está sonando" — el próximo tick
+        // (cada 5s en producción) tiene que notar la diferencia.
         _server.CurrentlyPlayingTrackId = "track-B";
         _server.CurrentlyPlayingTrackName = "Otra canción";
 
-        var ok = await PollUntilAsync(() => received is not null, timeoutMs: 12000);
+        var gotSecondTick = await PollUntilAsync(() => events.Count >= 2, timeoutMs: 12000);
 
-        Assert.True(ok, "No se recibió el evento track-changed a tiempo.");
-        using var doc = JsonDocument.Parse(received!.PayloadJson);
+        Assert.True(gotSecondTick, "No se recibió el segundo evento track-changed a tiempo.");
+        using var doc = JsonDocument.Parse(events[1].PayloadJson);
         Assert.Equal("track-B", doc.RootElement.GetProperty("TrackId").GetString());
     }
 
