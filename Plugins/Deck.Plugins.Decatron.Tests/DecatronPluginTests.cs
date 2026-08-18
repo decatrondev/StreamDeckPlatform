@@ -181,6 +181,39 @@ public class DecatronPluginTests : IAsyncLifetime
         Assert.Equal(30, _server.LastReceivedSeconds);
     }
 
+    [Fact]
+    public async Task ExecuteActionAsync_PlaySound_SendsSoundId()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("play-sound", """{"soundId":"reward-123"}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal("reward-123", _server.LastReceivedSoundId);
+    }
+
+    [Fact]
+    public async Task GetParameterOptionsAsync_PlaySound_ReturnsConfiguredSounds()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+        _server.Sounds = [("reward-1", "Aplausos"), ("reward-2", "Risas")];
+
+        var options = await _plugin.GetParameterOptionsAsync("play-sound", "soundId");
+
+        Assert.Equal(2, options.Count);
+        Assert.Contains(options, o => o.Value == "reward-1" && o.Label == "Aplausos");
+    }
+
+    [Fact]
+    public async Task GetParameterOptionsAsync_UnrelatedAction_ReturnsEmpty()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var options = await _plugin.GetParameterOptionsAsync("set-title", "title");
+
+        Assert.Empty(options);
+    }
+
     private sealed class TestPluginContext(ICredentialStore credentials) : IPluginContext
     {
         public ICredentialStore Credentials { get; } = credentials;

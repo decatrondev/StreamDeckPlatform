@@ -31,6 +31,8 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
     public List<string> ReceivedTimerCalls { get; } = [];
     public int? LastReceivedDuration { get; private set; }
     public int? LastReceivedSeconds { get; private set; }
+    public List<(string Id, string Name)> Sounds { get; set; } = [];
+    public string? LastReceivedSoundId { get; private set; }
 
     public FakeDecatronApiServer()
     {
@@ -131,6 +133,24 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
                 var doc = await ReadJsonBodyAsync(context);
                 LastReceivedSeconds = doc.RootElement.GetProperty("seconds").GetInt32();
                 WriteJson(context, 200, new { success = true, message = "Added", newTotalTime = 0 });
+                return;
+            }
+
+            if (path == "/api/v1/sounds")
+            {
+                WriteJson(context, 200, new
+                {
+                    success = true,
+                    sounds = Sounds.Select(s => new { id = s.Id, name = s.Name })
+                });
+                return;
+            }
+
+            if (path == "/api/v1/sounds/play")
+            {
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedSoundId = doc.RootElement.GetProperty("soundId").GetString();
+                WriteJson(context, 200, new { success = true, message = "Sound alert triggered" });
                 return;
             }
 

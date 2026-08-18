@@ -60,7 +60,9 @@ public sealed class DecatronPlugin : IPlugin
         new("timer-resume", "Reanudar timer"),
         new("timer-stop", "Detener timer"),
         new("timer-add", "Agregar tiempo al timer", "Segundos a sumar (puede ser negativo para restar).",
-            """{"fields":[{"key":"seconds","label":"Segundos","type":"number","required":true}]}""")
+            """{"fields":[{"key":"seconds","label":"Segundos","type":"number","required":true}]}"""),
+        new("play-sound", "Reproducir Sound Alert", "Uno de los que ya configuraste en el dashboard.",
+            """{"fields":[{"key":"soundId","label":"Sonido","type":"select","dynamic":true,"required":true}]}""")
     ];
 
     // Nunca se dispara — este plugin no tiene estado de conexión ni eventos
@@ -101,6 +103,7 @@ public sealed class DecatronPlugin : IPlugin
             "timer-resume" => await SimplePostAsync(token, "/timer/resume", "Timer reanudado.", ct),
             "timer-stop" => await SimplePostAsync(token, "/timer/stop", "Timer detenido.", ct),
             "timer-add" => await TimerAddAsync(token, parameters, ct),
+            "play-sound" => await PlaySoundAsync(token, parameters, ct),
             _ => PluginActionResult.Fail($"Acción desconocida: '{actionId}'.")
         };
     }
@@ -146,6 +149,45 @@ public sealed class DecatronPlugin : IPlugin
     {
         var (ok, body) = await PostAsync(token, path, new { }, ct);
         return ok ? PluginActionResult.Ok(okMessage) : PluginActionResult.Fail($"Decatron rechazó la acción: {body}");
+    }
+
+    private async Task<PluginActionResult> PlaySoundAsync(string token, JsonElement parameters, CancellationToken ct)
+    {
+        var soundId = parameters.GetProperty("soundId").GetString()!;
+        var (ok, body) = await PostAsync(token, "/sounds/play", new { soundId }, ct);
+        return ok ? PluginActionResult.Ok("Sound Alert disparado.") : PluginActionResult.Fail($"Decatron rechazó reproducir el sonido: {body}");
+    }
+
+    // Lista fija (no búsqueda en vivo como categorías) — se trae una sola vez
+    // al abrir el diálogo, la cantidad de Sound Alerts configurados es chica.
+    public async Task<IReadOnlyList<ParameterOption>> GetParameterOptionsAsync(
+        string actionId, string parameterKey, CancellationToken ct = default)
+    {
+        if ((actionId, parameterKey) != ("play-sound", "soundId"))
+        {
+            return [];
+        }
+
+        var token = await GetTokenAsync(ct);
+        if (token is null) return [];
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/sounds");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode) return [];
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+            return doc.RootElement.GetProperty("sounds").EnumerateArray()
+                .Select(s => new ParameterOption(s.GetProperty("id").GetString()!, s.GetProperty("name").GetString()!))
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     public async Task<IReadOnlyList<ParameterOption>> SearchParameterOptionsAsync(
