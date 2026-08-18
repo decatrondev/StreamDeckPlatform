@@ -25,12 +25,13 @@ public sealed class DecatronAuthService
     private const string TokenUrl = "https://twitch.decatron.net/api/oauth/token";
     private const string UserInfoUrl = "https://twitch.decatron.net/api/oauth/userinfo";
     private const string RevokeUrl = "https://twitch.decatron.net/api/oauth/revoke";
-    // action:chat sumado para que Flowdeck pueda mandar mensajes al chat de
-    // Twitch usando este mismo login (vía DecatronPlugin) — sin este scope
-    // en el token, twitch.decatron.net/api/v1/chat/send devuelve 403. Quien
-    // ya estaba conectado de antes necesita reconectar una vez para que el
-    // token nuevo incluya el scope.
-    private const string Scope = "read:profile action:chat";
+    // Uno por cada acción que DecatronPlugin expone — sin el scope pedido acá,
+    // el endpoint del bot correspondiente devuelve 403 aunque el usuario haya
+    // habilitado el scope para la app en el Developer Portal (el portal
+    // controla qué puede llegar a pedir la app, esta constante es lo que la
+    // app REALMENTE pide en cada login). Quien ya estaba conectado de antes
+    // necesita reconectar una vez para que el token nuevo incluya los scopes.
+    private const string Scope = "read:profile action:chat action:category action:title read:games";
 
     // Tiene que matchear EXACTO (con la barra final) lo que se registre
     // como redirect URI en el Developer Portal del bot — el backend valida
