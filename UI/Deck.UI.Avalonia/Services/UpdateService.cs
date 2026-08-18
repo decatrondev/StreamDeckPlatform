@@ -32,12 +32,16 @@ public sealed class UpdateService
     // Bloquea el arranque a propósito — es la contracara de la decisión de
     // UX de arriba. Si hay una actualización, este método nunca retorna: el
     // proceso actual termina y Velopack relanza la versión nueva.
-    public async Task CheckAndApplyBeforeLaunchAsync(string[] restartArgs)
+    // onStatus reporta cada etapa para que el caller la muestre en la
+    // ventana de arranque (ver App.axaml.cs / SplashWindow).
+    public async Task CheckAndApplyBeforeLaunchAsync(string[] restartArgs, Action<string>? onStatus = null)
     {
         // Corriendo desde el IDE (dotnet run) o portable sin instalar vía
         // Velopack: no hay nada que chequear, y CheckForUpdatesAsync tira si
         // se lo intenta de todas formas.
         if (!_manager.IsInstalled) return;
+
+        onStatus?.Invoke("Verificando actualizaciones…");
 
         UpdateInfo? updateInfo;
         try
@@ -53,8 +57,10 @@ public sealed class UpdateService
 
         if (updateInfo is null) return;
 
+        onStatus?.Invoke("Descargando actualización…");
         await _manager.DownloadUpdatesAsync(updateInfo);
 
+        onStatus?.Invoke("Instalando actualización…");
         _manager.ApplyUpdatesAndRestart(updateInfo.TargetFullRelease, restartArgs);
     }
 }

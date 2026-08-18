@@ -26,13 +26,10 @@ sealed class Program
         // esta ni siquiera debe llegar a inicializar Avalonia.
         if (!SingleInstanceGuard.TryAcquire()) return;
 
-        // Verificar (y aplicar) actualizaciones ANTES de abrir la ventana
-        // principal — no en background con la app ya abierta. Si hay una
-        // actualización, este método no vuelve: el proceso actual termina y
-        // Velopack relanza la versión nueva, que vuelve a pasar por acá y
-        // ya no encuentra nada pendiente.
-        new UpdateService().CheckAndApplyBeforeLaunchAsync(args).GetAwaiter().GetResult();
-
+        // El chequeo de actualizaciones corre DESPUÉS de esto, ya dentro del
+        // ciclo de vida de Avalonia (ver App.axaml.cs) — necesita el
+        // Dispatcher de UI corriendo para poder mostrar la ventana de
+        // arranque ("Verificando actualizaciones…") mientras espera a GitHub.
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);
     }
