@@ -10,13 +10,12 @@ namespace Deck.Core.Auth;
 // Login "Conectar con Decatron" — Authorization Code + PKCE contra el
 // servidor OAuth2 que el bot de Decatron ya tiene en producción
 // (twitch.decatron.net/api/oauth). No hay client_secret embebido: el repo
-// de Flowdeck es público, y el endpoint de refresh de ese backend exige
-// client_secret siempre (aunque se haya usado PKCE), así que no se guarda
-// ningún refresh_token — cuando el access token vence (1h, fijo del lado
-// del bot), hay que volver a llamar LoginAsync. Como ya queda sesión
-// abierta en decatron.net, reautorizar es un solo click de "Aprobar", no
-// un login completo de nuevo. Ver plan en el panel admin de Flowdeck,
-// content/docs/02-integracion-bot-decatron.
+// de Flowdeck es público, así que nunca podría guardar uno de forma segura.
+// El backend ahora reconoce esto (RFC 8252, clientes públicos): un token
+// emitido con PKCE puede refrescarse sin client_secret, así que acá sí se
+// guarda el refresh_token y se usa para renovar solo, sin que el usuario
+// tenga que volver a aprobar cada hora. Ver plan en el panel admin de
+// Flowdeck, content/docs/02-integracion-bot-decatron.
 public sealed class DecatronAuthService
 {
     public const string PluginId = "decatron";
@@ -76,10 +75,11 @@ public sealed class DecatronAuthService
             if (receivedState != state || code is null)
                 throw new InvalidOperationException("Respuesta de Decatron inválida (state no coincide o falta el code).");
 
-            var (accessToken, expiresAt) = await ExchangeCodeAsync(code, codeVerifier, ct);
+            var (accessToken, refreshToken, expiresAt) = await ExchangeCodeAsync(code, codeVerifier, ct);
             var displayName = await FetchDisplayNameAsync(accessToken, ct);
 
             await _credentials.SetAsync(PluginId, "access-token", accessToken, ct);
+            await _credentials.SetAsync(PluginId, "refresh-token", refreshToken, ct);
             await _credentials.SetAsync(PluginId, "expires-at", expiresAt.ToString("O"), ct);
             await _credentials.SetAsync(PluginId, "display-name", displayName, ct);
 
@@ -110,10 +110,15 @@ public sealed class DecatronAuthService
         }
 
         await _credentials.DeleteAsync(PluginId, "access-token", ct);
+        await _credentials.DeleteAsync(PluginId, "refresh-token", ct);
         await _credentials.DeleteAsync(PluginId, "expires-at", ct);
         await _credentials.DeleteAsync(PluginId, "display-name", ct);
     }
 
+    // Si el access token venció pero hay un refresh-token guardado, intenta
+    // renovar solo antes de darle al usuario un "no conectado" — así el
+    // reconectar-cada-hora deja de ser el camino normal, solo hace falta
+    // si el refresh también falló (revocado, sin red, etc.).
     public async Task<DecatronAccount?> GetStatusAsync(CancellationToken ct = default)
     {
         var token = await _credentials.GetAsync(PluginId, "access-token", ct);
@@ -121,10 +126,52 @@ public sealed class DecatronAuthService
         var displayName = await _credentials.GetAsync(PluginId, "display-name", ct);
 
         if (token is null || expiresAtRaw is null) return null;
+
         if (!DateTimeOffset.TryParse(expiresAtRaw, out var expiresAt) || expiresAt <= DateTimeOffset.UtcNow)
-            return null;
+        {
+            return await RefreshAsync(ct);
+        }
 
         return new DecatronAccount(displayName ?? "Decatron", expiresAt);
+    }
+
+    private async Task<DecatronAccount?> RefreshAsync(CancellationToken ct)
+    {
+        var refreshToken = await _credentials.GetAsync(PluginId, "refresh-token", ct);
+        if (refreshToken is null) return null;
+
+        var form = new Dictionary<string, string>
+        {
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken,
+            ["client_id"] = _clientId
+        };
+
+        try
+        {
+            using var response = await _http.PostAsync(TokenUrl, new FormUrlEncodedContent(form), ct);
+            if (!response.IsSuccessStatusCode) return null;
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+            var root = doc.RootElement;
+            var accessToken = root.GetProperty("access_token").GetString()!;
+            var newRefreshToken = root.GetProperty("refresh_token").GetString()!;
+            var expiresAt = DateTimeOffset.UtcNow.AddSeconds(root.GetProperty("expires_in").GetInt32());
+
+            var displayName = await _credentials.GetAsync(PluginId, "display-name", ct) ?? "Decatron";
+
+            await _credentials.SetAsync(PluginId, "access-token", accessToken, ct);
+            await _credentials.SetAsync(PluginId, "refresh-token", newRefreshToken, ct);
+            await _credentials.SetAsync(PluginId, "expires-at", expiresAt.ToString("O"), ct);
+
+            return new DecatronAccount(displayName, expiresAt);
+        }
+        catch
+        {
+            // Sin red, Decatron caído, refresh_token revocado — el usuario
+            // ve "sin conectar" y reautoriza a mano, no rompe nada.
+            return null;
+        }
     }
 
     private string BuildAuthorizeUrl(string state, string codeChallenge)
@@ -228,7 +275,7 @@ public sealed class DecatronAuthService
         context.Response.OutputStream.Close();
     }
 
-    private async Task<(string AccessToken, DateTimeOffset ExpiresAt)> ExchangeCodeAsync(
+    private async Task<(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt)> ExchangeCodeAsync(
         string code, string codeVerifier, CancellationToken ct)
     {
         var form = new Dictionary<string, string>
@@ -249,9 +296,10 @@ public sealed class DecatronAuthService
         using var doc = JsonDocument.Parse(body);
         var root = doc.RootElement;
         var accessToken = root.GetProperty("access_token").GetString()!;
+        var refreshToken = root.GetProperty("refresh_token").GetString()!;
         var expiresIn = root.GetProperty("expires_in").GetInt32();
 
-        return (accessToken, DateTimeOffset.UtcNow.AddSeconds(expiresIn));
+        return (accessToken, refreshToken, DateTimeOffset.UtcNow.AddSeconds(expiresIn));
     }
 
     private async Task<string> FetchDisplayNameAsync(string accessToken, CancellationToken ct)
