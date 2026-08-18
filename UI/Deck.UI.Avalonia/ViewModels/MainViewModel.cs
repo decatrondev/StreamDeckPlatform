@@ -226,7 +226,7 @@ public partial class MainViewModel : ViewModelBase
 
         var existing = button.Slot is null ? null : await LoadExistingAssignmentAsync(button.Slot);
 
-        var dialog = new AssignActionDialogViewModel(pluginActions, _app.Icons, ResolveParameterOptionsAsync, existing);
+        var dialog = new AssignActionDialogViewModel(pluginActions, _app.Icons, ResolveParameterOptionsAsync, SearchParameterOptionsAsync, existing);
         dialog.Closed += async result => await OnDialogClosedAsync(button, result);
 
         Dialog = dialog;
@@ -241,6 +241,17 @@ public partial class MainViewModel : ViewModelBase
     {
         var plugin = _app.Plugins.Plugins.FirstOrDefault(p => p.Metadata.Id == pluginId)?.Instance;
         return plugin?.GetParameterOptionsAsync(actionId, parameterKey, ct)
+            ?? Task.FromResult<IReadOnlyList<ParameterOption>>([]);
+    }
+
+    // Mismo patrón que ResolveParameterOptionsAsync, pero para un campo
+    // "search" (ej. buscar la categoría de Twitch por nombre mientras se
+    // tipea) — se llama de nuevo por cada búsqueda, no una sola vez.
+    private Task<IReadOnlyList<ParameterOption>> SearchParameterOptionsAsync(
+        string pluginId, string actionId, string parameterKey, string query, CancellationToken ct)
+    {
+        var plugin = _app.Plugins.Plugins.FirstOrDefault(p => p.Metadata.Id == pluginId)?.Instance;
+        return plugin?.SearchParameterOptionsAsync(actionId, parameterKey, query, ct)
             ?? Task.FromResult<IReadOnlyList<ParameterOption>>([]);
     }
 

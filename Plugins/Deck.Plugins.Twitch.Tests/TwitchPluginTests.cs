@@ -98,6 +98,27 @@ public class TwitchPluginTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SearchParameterOptionsAsync_SetCategory_ReturnsMatchingCategories()
+    {
+        await AuthorizeAsync();
+        _apiServer.CategorySearchResults = [("509658", "Just Chatting"), ("21779", "League of Legends")];
+
+        var options = await _plugin.SearchParameterOptionsAsync("set-category", "categoryId", "l");
+
+        Assert.Equal(2, options.Count);
+        Assert.Contains(options, o => o.Value == "509658" && o.Label == "Just Chatting");
+        Assert.Contains(options, o => o.Value == "21779" && o.Label == "League of Legends");
+    }
+
+    [Fact]
+    public async Task SearchParameterOptionsAsync_WithoutAuthorizing_ReturnsEmpty_DoesNotThrow()
+    {
+        var options = await _plugin.SearchParameterOptionsAsync("set-category", "categoryId", "l");
+
+        Assert.Empty(options);
+    }
+
+    [Fact]
     public async Task ExecuteActionAsync_WithoutAuthorizing_FailsGracefully_DoesNotThrow()
     {
         var result = await _plugin.ExecuteActionAsync("set-title", """{"title":"x"}""");

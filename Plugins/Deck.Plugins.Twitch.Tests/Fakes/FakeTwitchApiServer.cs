@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
@@ -26,6 +27,7 @@ public sealed class FakeTwitchApiServer : IAsyncDisposable
     public bool RejectRefresh { get; set; }
     public bool RejectNextApiCall { get; set; }
     public string BroadcasterUserId { get; set; } = "broadcaster-1";
+    public List<(string Id, string Name)> CategorySearchResults { get; set; } = [];
 
     public IReadOnlyCollection<(string Method, string Path, string Body)> ReceivedApiCalls => _receivedApiCalls.ToArray();
 
@@ -85,6 +87,15 @@ public sealed class FakeTwitchApiServer : IAsyncDisposable
                 HandleAuthorizedRequest(context, () => WriteJson(context, 200, new
                 {
                     data = new[] { new { id = BroadcasterUserId, login = "broadcaster", display_name = "Broadcaster" } }
+                }));
+                return;
+            }
+
+            if (path == "/helix/search/categories" && context.Request.HttpMethod == "GET")
+            {
+                HandleAuthorizedRequest(context, () => WriteJson(context, 200, new
+                {
+                    data = CategorySearchResults.Select(c => new { id = c.Id, name = c.Name }).ToArray()
                 }));
                 return;
             }

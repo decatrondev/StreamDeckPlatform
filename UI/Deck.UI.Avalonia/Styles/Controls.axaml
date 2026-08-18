@@ -99,7 +99,7 @@
   </Style>
 
   <!-- Campos del diálogo de asignación. -->
-  <Style Selector="TextBox.FlowdeckField, ComboBox.FlowdeckField">
+  <Style Selector="TextBox.FlowdeckField, ComboBox.FlowdeckField, AutoCompleteBox.FlowdeckField">
     <Setter Property="Background" Value="{StaticResource FlowdeckGraphiteBrush}" />
     <Setter Property="BorderBrush" Value="{StaticResource FlowdeckLineBrush}" />
     <Setter Property="Foreground" Value="{StaticResource FlowdeckInkBrush}" />

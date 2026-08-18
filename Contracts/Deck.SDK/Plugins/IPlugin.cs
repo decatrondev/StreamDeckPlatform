@@ -35,4 +35,13 @@ public interface IPlugin : IAsyncDisposable
     Task<IReadOnlyList<ParameterOption>> GetParameterOptionsAsync(
         string actionId, string parameterKey, CancellationToken ct = default)
         => Task.FromResult<IReadOnlyList<ParameterOption>>([]);
+
+    // Igual que GetParameterOptionsAsync pero para un campo "search" — en vez
+    // de traer la lista entera una sola vez (impensable para algo como las
+    // categorías de Twitch, son miles), se llama de nuevo cada vez que el
+    // usuario tipea en el autocomplete de la UI. Implementación por default
+    // (sin resultados) para los plugins sin ningún campo de este tipo.
+    Task<IReadOnlyList<ParameterOption>> SearchParameterOptionsAsync(
+        string actionId, string parameterKey, string query, CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<ParameterOption>>([]);
 }

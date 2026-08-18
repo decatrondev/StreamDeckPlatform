@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json;
 using Deck.SDK;
 using Deck.SDK.Plugins;
@@ -66,8 +67,8 @@ public sealed class TwitchPlugin : IPlugin
     [
         new("set-title", "Cambiar título del stream", "Parámetro: title.",
             """{"fields":[{"key":"title","label":"Título","type":"text","required":true}]}"""),
-        new("set-category", "Cambiar categoría", "Parámetro: categoryId.",
-            """{"fields":[{"key":"categoryId","label":"ID de categoría de Twitch","type":"text","required":true}]}"""),
+        new("set-category", "Cambiar categoría", "Buscá el juego/categoría por nombre.",
+            """{"fields":[{"key":"categoryId","label":"Categoría","type":"search","required":true}]}"""),
         new("create-marker", "Crear marcador", "Parámetro opcional: description.",
             """{"fields":[{"key":"description","label":"Descripción (opcional)","type":"text","required":false}]}"""),
         new("send-chat-message", "Enviar mensaje al chat", "Parámetro: message.",
@@ -197,6 +198,27 @@ public sealed class TwitchPlugin : IPlugin
 
             default:
                 return PluginActionResult.Fail($"Acción desconocida: '{actionId}'.");
+        }
+    }
+
+    public async Task<IReadOnlyList<ParameterOption>> SearchParameterOptionsAsync(
+        string actionId, string parameterKey, string query, CancellationToken ct = default)
+    {
+        if (_tokens is null || (actionId, parameterKey) != ("set-category", "categoryId") || string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        try
+        {
+            var results = await _api.SearchCategoriesAsync(_tokens.AccessToken, query, ct);
+            return results.Select(c => new ParameterOption(c.Id, c.Name)).ToList();
+        }
+        catch
+        {
+            // Sesión vencida, timeout, lo que sea — el autocomplete se queda
+            // vacío para esa búsqueda, no rompe el diálogo.
+            return [];
         }
     }
 

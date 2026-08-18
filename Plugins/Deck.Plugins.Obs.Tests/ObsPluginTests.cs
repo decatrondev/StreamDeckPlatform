@@ -147,6 +147,21 @@ public class ObsPluginTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ConnectAsync_UsesStoredHostAndPort_WhenConfigured()
+    {
+        // El ctor apunta a un puerto que no existe — si ConnectAsync no
+        // leyera host/port guardados en Ajustes, esto nunca conectaría.
+        await using var plugin = new ObsPlugin(new Uri("ws://127.0.0.1:1"));
+        var context = new TestPluginContext();
+        await context.Credentials.SetAsync("host", _server.Uri.Host);
+        await context.Credentials.SetAsync("port", _server.Uri.Port.ToString());
+        await plugin.InitializeAsync(context);
+
+        await plugin.ConnectAsync();
+        await WaitForStateAsync(plugin, ObsConnectionState.Connected);
+    }
+
+    [Fact]
     public async Task Connection_WithCorrectPassword_Authenticates_ActionsWork()
     {
         _server.RequiredPassword = "correcta";

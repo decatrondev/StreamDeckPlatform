@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Avalonia.Media.Imaging;
@@ -20,7 +21,8 @@ public enum ParameterFieldType
     Text,
     Number,
     Boolean,
-    Select
+    Select,
+    Search
 }
 
 public sealed record AssignActionResult(
@@ -38,6 +40,12 @@ public sealed record ExistingAssignment(
 // cómo llegar a la instancia real del plugin conectado.
 public delegate Task<IReadOnlyList<ParameterOption>> ResolveParameterOptions(
     string pluginId, string actionId, string parameterKey, CancellationToken ct);
+
+// Igual que ResolveParameterOptions pero para un campo "search" — se llama
+// de nuevo cada vez que el usuario tipea en el autocomplete (ej. buscar una
+// categoría de Twitch por nombre), no una sola vez al abrir el diálogo.
+public delegate Task<IReadOnlyList<ParameterOption>> SearchParameterOptions(
+    string pluginId, string actionId, string parameterKey, string query, CancellationToken ct);
 
 // Un campo del formulario dinámico armado a partir del ParametersSchemaJson
 // de la acción elegida — reemplaza el textarea de JSON crudo que había antes.
@@ -64,10 +72,16 @@ public partial class ParameterFieldViewModel(string key, string label, Parameter
     [ObservableProperty]
     public partial bool IsLoadingOptions { get; set; }
 
+    // Solo para Type == Search — lo consume el AutoCompleteBox de la vista
+    // (AsyncPopulator) cada vez que el usuario tipea. Null para el resto de
+    // los tipos de campo.
+    public Func<string, CancellationToken, Task<IEnumerable<object>>>? Populator { get; set; }
+
     public bool HasValue => Type switch
     {
         ParameterFieldType.Boolean => true,
         ParameterFieldType.Select => SelectedOption is not null,
+        ParameterFieldType.Search => SelectedOption is not null || !string.IsNullOrWhiteSpace(TextValue),
         _ => !string.IsNullOrWhiteSpace(TextValue)
     };
 }
@@ -79,6 +93,7 @@ public partial class AssignActionDialogViewModel : ViewModelBase
 
     private readonly IconStore? _icons;
     private readonly ResolveParameterOptions? _resolveOptions;
+    private readonly SearchParameterOptions? _searchOptions;
     private readonly List<ActionOption> _allActions = [];
 
     public ObservableCollection<PluginOption> AvailablePlugins { get; } = [];
@@ -131,10 +146,12 @@ public partial class AssignActionDialogViewModel : ViewModelBase
         IReadOnlyList<(string PluginId, string PluginName, PluginActionDescriptor Action)> pluginActions,
         IconStore? icons = null,
         ResolveParameterOptions? resolveOptions = null,
+        SearchParameterOptions? searchOptions = null,
         ExistingAssignment? existing = null)
     {
         _icons = icons;
         _resolveOptions = resolveOptions;
+        _searchOptions = searchOptions;
 
         _allActions.Add(new(SystemPluginId, "open-app", "Abrir aplicación", "Ruta del ejecutable"));
         _allActions.Add(new(SystemPluginId, "run-command", "Ejecutar comando", "Comando"));
@@ -236,10 +253,21 @@ public partial class AssignActionDialogViewModel : ViewModelBase
                 "number" => ParameterFieldType.Number,
                 "boolean" => ParameterFieldType.Boolean,
                 "select" => ParameterFieldType.Select,
+                "search" => ParameterFieldType.Search,
                 _ => ParameterFieldType.Text
             };
 
             var field = new ParameterFieldViewModel(sf.Key, sf.Label, type, sf.Required);
+
+            if (type == ParameterFieldType.Search)
+            {
+                field.Populator = async (query, ct) =>
+                {
+                    if (_searchOptions is null) return [];
+                    var options = await _searchOptions(SelectedAction.PluginId, SelectedAction.ActionId, sf.Key, query, ct);
+                    return options.Cast<object>();
+                };
+            }
 
             if (existingValues is { } values && values.TryGetProperty(sf.Key, out var existingValue))
             {
@@ -347,6 +375,10 @@ public partial class AssignActionDialogViewModel : ViewModelBase
                         break;
                     case ParameterFieldType.Select:
                         if (field.SelectedOption is not null) writer.WriteString(field.Key, field.SelectedOption.Value);
+                        break;
+                    case ParameterFieldType.Search:
+                        if (field.SelectedOption is not null) writer.WriteString(field.Key, field.SelectedOption.Value);
+                        else if (!string.IsNullOrWhiteSpace(field.TextValue)) writer.WriteString(field.Key, field.TextValue.Trim());
                         break;
                     default:
                         if (!string.IsNullOrWhiteSpace(field.TextValue)) writer.WriteString(field.Key, field.TextValue.Trim());

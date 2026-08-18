@@ -230,6 +230,16 @@
                                                        Foreground="{StaticResource FlowdeckInkFaintBrush}"
                                                        IsVisible="{Binding IsLoadingOptions}" />
                                         </StackPanel>
+
+                                        <!-- Autocomplete en vivo (ej. buscar categoría de Twitch por
+                                             nombre) — a diferencia de Select, no trae la lista entera
+                                             una sola vez: AsyncPopulator busca de nuevo por cada tipeo. -->
+                                        <AutoCompleteBox Classes="FlowdeckField" Width="300" HorizontalAlignment="Left"
+                                                          MinimumPrefixLength="2" FilterMode="None"
+                                                          AsyncPopulator="{Binding Populator}"
+                                                          SelectedItem="{Binding SelectedOption}"
+                                                          PlaceholderText="Escribí para buscar…"
+                                                          IsVisible="{Binding Type, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:ParameterFieldType.Search}}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -395,6 +405,16 @@
                                    TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
                         <TextBox Classes="FlowdeckField" PasswordChar="•" Text="{Binding ObsPassword}"
                                   PlaceholderText="Contraseña de OBS WebSocket" Width="320" HorizontalAlignment="Left" Margin="0,4,0,0" />
+
+                        <TextBlock Text="Host y puerto — solo hace falta tocarlos si OBS corre en otra PC de la red o si se cambió el puerto default (4455)."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" Margin="0,8,0,0" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox Classes="FlowdeckField" Text="{Binding ObsHost}"
+                                      PlaceholderText="127.0.0.1" Width="200" />
+                            <TextBox Classes="FlowdeckField" Text="{Binding ObsPort}"
+                                      PlaceholderText="4455" Width="100" />
+                        </StackPanel>
+
                         <Button Content="Guardar y reconectar" Classes="Primary" Command="{Binding SaveObsCommand}"
                                 HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>

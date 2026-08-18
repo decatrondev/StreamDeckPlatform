@@ -52,6 +52,12 @@ public partial class SettingsPageViewModel : ViewModelBase
     public partial string ObsPassword { get; set; } = "";
 
     [ObservableProperty]
+    public partial string ObsHost { get; set; } = "";
+
+    [ObservableProperty]
+    public partial string ObsPort { get; set; } = "";
+
+    [ObservableProperty]
     public partial string DecatronStatus { get; set; } = "sin conectar";
 
     [ObservableProperty]
@@ -92,6 +98,15 @@ public partial class SettingsPageViewModel : ViewModelBase
         CloseCommand = new RelayCommand(() => Closed?.Invoke());
         RefreshStatuses();
         _ = RefreshDecatronStatusAsync();
+        _ = LoadObsSettingsAsync();
+    }
+
+    private async Task LoadObsSettingsAsync()
+    {
+        if (_app is null) return;
+
+        ObsHost = await _app.Credentials.GetAsync(ObsPlugin.PluginId, "host") ?? "";
+        ObsPort = await _app.Credentials.GetAsync(ObsPlugin.PluginId, "port") ?? "";
     }
 
     private SettingsCategoryViewModel Category(string id) => Categories.First(c => c.Id == id);
@@ -133,6 +148,9 @@ public partial class SettingsPageViewModel : ViewModelBase
         {
             await _app.Credentials.SetAsync(ObsPlugin.PluginId, "password", ObsPassword);
         }
+
+        await _app.Credentials.SetAsync(ObsPlugin.PluginId, "host", ObsHost.Trim());
+        await _app.Credentials.SetAsync(ObsPlugin.PluginId, "port", ObsPort.Trim());
 
         await _app.Plugins.DisconnectAsync(ObsPlugin.PluginId);
         await _app.Plugins.ConnectAsync(ObsPlugin.PluginId);

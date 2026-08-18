@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Linq;
 
 namespace Deck.Plugins.Twitch;
 
@@ -29,6 +30,17 @@ public class TwitchApiClient
 
         using var doc = JsonDocument.Parse(body);
         return doc.RootElement.GetProperty("data")[0].GetProperty("id").GetString()!;
+    }
+
+    public async Task<IReadOnlyList<(string Id, string Name)>> SearchCategoriesAsync(string accessToken, string query, CancellationToken ct)
+    {
+        using var response = await SendAsync(HttpMethod.Get, $"/helix/search/categories?query={Uri.EscapeDataString(query)}", accessToken, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+
+        using var doc = JsonDocument.Parse(body);
+        return doc.RootElement.GetProperty("data").EnumerateArray()
+            .Select(c => (c.GetProperty("id").GetString()!, c.GetProperty("name").GetString()!))
+            .ToList();
     }
 
     public Task ModifyChannelAsync(string accessToken, string broadcasterId, string? title, string? categoryId, CancellationToken ct)

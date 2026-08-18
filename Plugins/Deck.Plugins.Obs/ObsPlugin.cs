@@ -12,10 +12,12 @@ public sealed class ObsPlugin : IPlugin
 {
     public const string PluginId = "obs";
 
-    // Host/puerto quedan fijos al default de obs-websocket — no son secretos,
-    // así que no pasan por el Credential Manager. Si más adelante hace falta
-    // configurarlos, es un setting de plugin, no una credencial.
-    private readonly Uri _uri;
+    // Default de obs-websocket. Si el usuario configura host/puerto propios
+    // en Ajustes, ConnectAsync los lee del mismo Credential Manager que la
+    // password (no son secretos, pero ya es el único almacén por-plugin que
+    // el Core le da al plugin — no vale la pena un contrato nuevo para dos
+    // strings) y arma un Uri nuevo antes de conectar.
+    private Uri _uri;
     private readonly ObsWebSocketClient _client = new();
 
     private IPluginContext? _context;
@@ -65,6 +67,7 @@ public sealed class ObsPlugin : IPlugin
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
+        _uri = await ResolveUriAsync(ct);
         var password = await GetPasswordAsync(ct);
         _client.Start(_uri, password);
 
@@ -167,6 +170,22 @@ public sealed class ObsPlugin : IPlugin
             .Select(i => i.GetProperty("inputName").GetString()!)
             .Select(name => new ParameterOption(name, name))
             .ToList();
+    }
+
+    // Si el usuario no configuró nada en Ajustes, se queda con el _uri que
+    // trae el constructor (el default real, o el del server falso en los
+    // tests) — solo pisa host/puerto cuando hay algo guardado.
+    private async Task<Uri> ResolveUriAsync(CancellationToken ct)
+    {
+        if (_context is null) return _uri;
+
+        var host = await _context.Credentials.GetAsync("host", ct);
+        var portRaw = await _context.Credentials.GetAsync("port", ct);
+        if (string.IsNullOrWhiteSpace(host) && string.IsNullOrWhiteSpace(portRaw)) return _uri;
+
+        var effectiveHost = string.IsNullOrWhiteSpace(host) ? _uri.Host : host;
+        var effectivePort = int.TryParse(portRaw, out var p) ? p : _uri.Port;
+        return new Uri($"ws://{effectiveHost}:{effectivePort}");
     }
 
     private async Task<string?> GetPasswordAsync(CancellationToken ct) =>
