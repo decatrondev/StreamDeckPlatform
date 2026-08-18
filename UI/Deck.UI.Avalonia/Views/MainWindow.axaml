@@ -205,11 +205,34 @@
 
             <DockPanel Grid.Column="1" Margin="24">
 
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,18">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,18" VerticalAlignment="Center">
                     <Button Content="← Volver a la grilla" Classes="Secondary" Padding="10,4"
                             Command="{Binding CloseCommand}" />
                     <TextBlock Text="{Binding SelectedCategory.Name}" FontWeight="SemiBold" FontSize="15"
                                VerticalAlignment="Center" Foreground="{StaticResource FlowdeckInkBrush}" />
+
+                    <!-- Un solo pill de estado — SelectedCategory.IsConnected siempre
+                         corresponde a la categoría visible, así que sirve para las 5. -->
+                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                            IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=decatron}">
+                        <TextBlock Classes="StatusPillText" Text="{Binding DecatronStatus}" />
+                    </Border>
+                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                            IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=obs}">
+                        <TextBlock Classes="StatusPillText" Text="{Binding ObsStatus}" />
+                    </Border>
+                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                            IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=twitch}">
+                        <TextBlock Classes="StatusPillText" Text="{Binding TwitchStatus}" />
+                    </Border>
+                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                            IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=spotify}">
+                        <TextBlock Classes="StatusPillText" Text="{Binding SpotifyStatus}" />
+                    </Border>
+                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                            IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=discord}">
+                        <TextBlock Classes="StatusPillText" Text="{Binding DiscordStatus}" />
+                    </Border>
                 </StackPanel>
 
                 <TextBlock DockPanel.Dock="Bottom" Text="{Binding FeedbackMessage}" FontSize="12"
@@ -219,9 +242,12 @@
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=decatron}">
-                        <TextBlock Text="{Binding DecatronStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         <TextBlock Text="Iniciá sesión con tu cuenta de Decatron (usa tu Twitch) para identificarte en Flowdeck. Se abre el navegador."
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420"
+                                   IsVisible="{Binding !IsDecatronConnected}" />
+                        <TextBlock Text="Tu cuenta de Flowdeck está vinculada a Decatron con tu Twitch. Si el acceso vence (dura una hora), se te va a pedir reautorizar con un click."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420"
+                                   IsVisible="{Binding IsDecatronConnected}" />
                         <Button Content="Conectar con Decatron" Classes="Primary" Command="{Binding ConnectDecatronCommand}"
                                 IsVisible="{Binding !IsDecatronConnected}" HorizontalAlignment="Left" Margin="0,4,0,0" />
                         <Button Content="Desconectar" Classes="Secondary" Command="{Binding DisconnectDecatronCommand}"
@@ -230,34 +256,30 @@
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=obs}">
-                        <TextBlock Text="{Binding ObsStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         <TextBlock Text="Contraseña del servidor WebSocket de OBS (Herramientas → Configuración de WebSocket en OBS). Dejar vacío si no tiene."
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
                         <TextBox Classes="FlowdeckField" PasswordChar="•" Text="{Binding ObsPassword}"
-                                  PlaceholderText="Contraseña de OBS WebSocket" Width="320" HorizontalAlignment="Left" />
+                                  PlaceholderText="Contraseña de OBS WebSocket" Width="320" HorizontalAlignment="Left" Margin="0,4,0,0" />
                         <Button Content="Guardar y reconectar" Classes="Primary" Command="{Binding SaveObsCommand}"
                                 HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=twitch}">
-                        <TextBlock Text="{Binding TwitchStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         <TextBlock Text="El login propio de Twitch todavía no está disponible desde la app — las acciones de Twitch van a llegar vía la cuenta de Decatron."
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=spotify}">
-                        <TextBlock Text="{Binding SpotifyStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         <TextBlock Text="El login de Spotify todavía no está disponible desde la app — llega en una próxima actualización."
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=discord}">
-                        <TextBlock Text="{Binding DiscordStatus}" Foreground="{StaticResource FlowdeckInkMutedBrush}" />
                         <TextBlock Text="Se conecta solo si Discord está abierto en esta máquina."
-                                   TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
                     </StackPanel>
 
                 </StackPanel>

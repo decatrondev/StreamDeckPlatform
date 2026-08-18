@@ -66,6 +66,26 @@
     <Setter Property="Fill" Value="{StaticResource FlowdeckAccentBrush}" />
   </Style>
 
+  <!-- Pill de estado junto al título de cada categoría en Ajustes — antes
+       era una línea de texto suelta arriba del todo, se ve más intencional
+       como badge que como un renglón más de texto plano. -->
+  <Style Selector="Border.StatusPill">
+    <Setter Property="Background" Value="{StaticResource FlowdeckSurfaceRaisedBrush}" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Padding" Value="10,3" />
+  </Style>
+  <Style Selector="Border.StatusPill.Connected">
+    <Setter Property="Background" Value="#262563EB" />
+  </Style>
+  <Style Selector="TextBlock.StatusPillText">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+  </Style>
+  <Style Selector="Border.StatusPill.Connected TextBlock.StatusPillText">
+    <Setter Property="Foreground" Value="{StaticResource FlowdeckAccentLightBrush}" />
+  </Style>
+
   <!-- Campos del diálogo de asignación. -->
   <Style Selector="TextBox.FlowdeckField, ComboBox.FlowdeckField">
     <Setter Property="Background" Value="{StaticResource FlowdeckGraphiteBrush}" />

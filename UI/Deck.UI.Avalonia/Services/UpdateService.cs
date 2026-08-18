@@ -8,16 +8,26 @@ namespace Deck.UI.Avalonia.Services;
 // público — no hace falta un feed propio.
 //
 // Decisión de UX (revisada): el chequeo pasó de "en background, aplicar
-// recién cuando el proceso cierre solo" (WaitExitThenApplyUpdates) a
-// "verificar y aplicar ANTES de abrir cualquier ventana" —
-// ApplyUpdatesAndRestart corta el proceso actual y relanza la versión
-// nueva, así que se llama desde Program.cs antes de construir la app de
-// Avalonia. El esquema anterior dependía de que el proceso terminara de
-// forma prolija para disparar el hook de salida; si el usuario cerraba
-// Flowdeck de otra forma (matar el proceso, apagar la PC), la actualización
-// quedaba descargada pero nunca se aplicaba — de ahí que pareciera que el
-// auto-update "dejó de funcionar". Este approach no depende de eso: se
-// resuelve entero antes de que exista ninguna ventana que cerrar.
+// recién cuando el proceso cierre solo" a "verificar y aplicar ANTES de
+// abrir cualquier ventana" — se llama desde App.axaml.cs con la ventana de
+// arranque (SplashWindow) ya mostrada, antes de construir la ventana
+// principal. El esquema viejo dependía de que el proceso terminara de forma
+// prolija para disparar el hook de salida; si el usuario cerraba Flowdeck de
+// otra forma (matar el proceso, apagar la PC), la actualización quedaba
+// descargada pero nunca se aplicaba.
+//
+// OJO con el método usado para aplicar: ApplyUpdatesAndRestart (probado en
+// v0.0.5/v0.0.6) corta el proceso y relanza directo, pero NO tiene parámetro
+// "silent" — a diferencia de WaitExitThenApplyUpdates, siempre muestra su
+// propio diálogo nativo de Windows ("Actualización de Flowdeck / Instalando
+// actualización...") mientras aplica, que es justo lo que NO queríamos (la
+// marca propia se rompía ahí). Por eso se usa WaitExitThenApplyUpdates con
+// silent:true de nuevo, pero ahora ANTES de mostrar la ventana principal (no
+// en background con la app abierta, que era el problema original) — y como
+// ese método no corta el proceso por sí solo (solo le avisa al updater que
+// espere a que salga), hay que llamar Environment.Exit inmediatamente
+// después. No hay nada que limpiar en este punto porque todavía no se
+// construyó ninguna ventana real.
 public sealed class UpdateService
 {
     private const string RepoUrl = "https://github.com/decatrondev/StreamDeckPlatform";
@@ -61,6 +71,7 @@ public sealed class UpdateService
         await _manager.DownloadUpdatesAsync(updateInfo);
 
         onStatus?.Invoke("Instalando actualización…");
-        _manager.ApplyUpdatesAndRestart(updateInfo.TargetFullRelease, restartArgs);
+        _manager.WaitExitThenApplyUpdates(updateInfo.TargetFullRelease, silent: true, restart: true, restartArgs: restartArgs);
+        Environment.Exit(0);
     }
 }
