@@ -26,6 +26,11 @@ public sealed class FakeObsServer : IAsyncDisposable
     public string? RequiredPassword { get; set; }
     public IReadOnlyCollection<(string RequestType, JsonElement? RequestData)> ReceivedRequests => _receivedRequests.ToArray();
 
+    // Por default cualquier request responde con {} — algunos tests necesitan
+    // simular una respuesta real (ej. GetSceneList con escenas falsas) para
+    // validar cómo el plugin la interpreta.
+    public Dictionary<string, object> CannedResponses { get; } = new();
+
     public FakeObsServer()
     {
         Port = GetFreeTcpPort();
@@ -205,6 +210,7 @@ public sealed class FakeObsServer : IAsyncDisposable
 
             _receivedRequests.Enqueue((requestType, requestData));
 
+            var responseData = CannedResponses.TryGetValue(requestType, out var canned) ? canned : new { };
             var response = new
             {
                 op = ObsOpCode.RequestResponse,
@@ -213,7 +219,7 @@ public sealed class FakeObsServer : IAsyncDisposable
                     requestType,
                     requestId,
                     requestStatus = new { result = true, code = 100 },
-                    responseData = new { }
+                    responseData
                 }
             };
 

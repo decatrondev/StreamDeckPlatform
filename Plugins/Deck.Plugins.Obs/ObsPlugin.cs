@@ -43,8 +43,10 @@ public sealed class ObsPlugin : IPlugin
 
     public IReadOnlyList<PluginActionDescriptor> Actions { get; } =
     [
-        new("set-scene", "Cambiar escena", "Cambia la escena de programa actual."),
-        new("toggle-mute", "Mutear/desmutear fuente", "Alterna el mute de una fuente de audio."),
+        new("set-scene", "Cambiar escena", "Cambia la escena de programa actual.",
+            """{"fields":[{"key":"scene","label":"Escena","type":"select","dynamic":true,"required":true}]}"""),
+        new("toggle-mute", "Mutear/desmutear fuente", "Alterna el mute de una fuente de audio.",
+            """{"fields":[{"key":"source","label":"Fuente de audio","type":"select","dynamic":true,"required":true}]}"""),
         new("start-stream", "Iniciar stream"),
         new("stop-stream", "Detener stream"),
         new("start-record", "Iniciar grabación"),
@@ -124,6 +126,47 @@ public sealed class ObsPlugin : IPlugin
     {
         await _client.SendRequestAsync(requestType, null, ct);
         return PluginActionResult.Ok($"{requestType} ejecutado.");
+    }
+
+    public async Task<IReadOnlyList<ParameterOption>> GetParameterOptionsAsync(
+        string actionId, string parameterKey, CancellationToken ct = default)
+    {
+        try
+        {
+            return (actionId, parameterKey) switch
+            {
+                ("set-scene", "scene") => await GetSceneOptionsAsync(ct),
+                ("toggle-mute", "source") => await GetInputOptionsAsync(ct),
+                _ => []
+            };
+        }
+        catch
+        {
+            // OBS desconectado, timeout, lo que sea — el campo dinámico queda
+            // vacío en la UI, no rompe el diálogo de asignar tecla.
+            return [];
+        }
+    }
+
+    private async Task<IReadOnlyList<ParameterOption>> GetSceneOptionsAsync(CancellationToken ct)
+    {
+        var response = await _client.SendRequestAsync("GetSceneList", null, ct);
+        return response.GetProperty("scenes").EnumerateArray()
+            .Select(s => s.GetProperty("sceneName").GetString()!)
+            .Select(name => new ParameterOption(name, name))
+            .ToList();
+    }
+
+    private async Task<IReadOnlyList<ParameterOption>> GetInputOptionsAsync(CancellationToken ct)
+    {
+        // Se listan todos los inputs, no solo los de audio — OBS no expone un
+        // filtro genérico simple para "solo audio" y llamar toggle-mute sobre
+        // algo sin audio no hace nada, no rompe.
+        var response = await _client.SendRequestAsync("GetInputList", null, ct);
+        return response.GetProperty("inputs").EnumerateArray()
+            .Select(i => i.GetProperty("inputName").GetString()!)
+            .Select(name => new ParameterOption(name, name))
+            .ToList();
     }
 
     private async Task<string?> GetPasswordAsync(CancellationToken ct) =>

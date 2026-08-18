@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Deck.Core.Model;
 using Deck.Core.SystemActions;
+using Deck.SDK.Plugins;
 using Deck.UI.Avalonia.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -189,11 +190,22 @@ public partial class MainViewModel : ViewModelBase
 
         var existing = button.Slot is null ? null : await LoadExistingAssignmentAsync(button.Slot);
 
-        var dialog = new AssignActionDialogViewModel(pluginActions, _app.Icons, existing);
+        var dialog = new AssignActionDialogViewModel(pluginActions, _app.Icons, ResolveParameterOptionsAsync, existing);
         dialog.Closed += async result => await OnDialogClosedAsync(button, result);
 
         Dialog = dialog;
         IsDialogOpen = true;
+    }
+
+    // Le pasa al diálogo cómo resolver las opciones en vivo de un campo
+    // "select" dinámico (ej. las escenas reales de OBS) — mismo patrón de
+    // acceso a instancias que ya usa SettingsPageViewModel.GetInstance<T>.
+    private Task<IReadOnlyList<ParameterOption>> ResolveParameterOptionsAsync(
+        string pluginId, string actionId, string parameterKey, CancellationToken ct)
+    {
+        var plugin = _app.Plugins.Plugins.FirstOrDefault(p => p.Metadata.Id == pluginId)?.Instance;
+        return plugin?.GetParameterOptionsAsync(actionId, parameterKey, ct)
+            ?? Task.FromResult<IReadOnlyList<ParameterOption>>([]);
     }
 
     // Sin esto, click derecho → Editar abría el diálogo siempre vacío aunque
@@ -287,7 +299,7 @@ public partial class MainViewModel : ViewModelBase
 
             var isSystemAction = result.PluginId == SystemActionsPlugin.PluginId;
             var parameters = !isSystemAction
-                ? (result.RawParametersJson ?? "{}")
+                ? (result.ParametersJson ?? "{}")
                 : result.ActionId == "open-url"
                     ? JsonSerializer.Serialize(new { url = result.PathOrUrl })
                     : JsonSerializer.Serialize(new { path = result.PathOrUrl, args = result.Args });

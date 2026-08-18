@@ -44,8 +44,10 @@ public sealed class DiscordPlugin : IPlugin
     public IReadOnlyList<PluginActionDescriptor> Actions { get; } =
     [
         new("toggle-mute", "Mutear/desmutear micrófono"),
-        new("set-voice-channel", "Cambiar de canal de voz", "Parámetro: channelId."),
-        new("send-message", "Enviar mensaje rápido", "Parámetro: content. Requiere un webhook configurado.")
+        new("set-voice-channel", "Cambiar de canal de voz", "Parámetro: channelId.",
+            """{"fields":[{"key":"channelId","label":"ID del canal de voz","type":"text","required":true}]}"""),
+        new("send-message", "Enviar mensaje rápido", "Parámetro: content. Requiere un webhook configurado.",
+            """{"fields":[{"key":"content","label":"Mensaje","type":"text","required":true}]}""")
     ];
 
     public event EventHandler<PluginEvent>? EventRaised;

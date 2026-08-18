@@ -78,6 +78,57 @@ public class ObsPluginTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetParameterOptionsAsync_SetScene_ReturnsRealSceneNames()
+    {
+        _server.CannedResponses["GetSceneList"] = new
+        {
+            scenes = new[] { new { sceneName = "Gameplay" }, new { sceneName = "Charla" } }
+        };
+
+        await _plugin.ConnectAsync();
+        await WaitForStateAsync(_plugin, ObsConnectionState.Connected);
+
+        var options = await _plugin.GetParameterOptionsAsync("set-scene", "scene");
+
+        Assert.Equal(["Gameplay", "Charla"], options.Select(o => o.Value));
+    }
+
+    [Fact]
+    public async Task GetParameterOptionsAsync_ToggleMute_ReturnsRealInputNames()
+    {
+        _server.CannedResponses["GetInputList"] = new
+        {
+            inputs = new[] { new { inputName = "Mic/Aux" }, new { inputName = "Desktop Audio" } }
+        };
+
+        await _plugin.ConnectAsync();
+        await WaitForStateAsync(_plugin, ObsConnectionState.Connected);
+
+        var options = await _plugin.GetParameterOptionsAsync("toggle-mute", "source");
+
+        Assert.Equal(["Mic/Aux", "Desktop Audio"], options.Select(o => o.Value));
+    }
+
+    [Fact]
+    public async Task GetParameterOptionsAsync_UnknownField_ReturnsEmpty()
+    {
+        await _plugin.ConnectAsync();
+        await WaitForStateAsync(_plugin, ObsConnectionState.Connected);
+
+        var options = await _plugin.GetParameterOptionsAsync("start-stream", "whatever");
+
+        Assert.Empty(options);
+    }
+
+    [Fact]
+    public async Task GetParameterOptionsAsync_WithoutConnecting_ReturnsEmpty_DoesNotThrow()
+    {
+        var options = await _plugin.GetParameterOptionsAsync("set-scene", "scene");
+
+        Assert.Empty(options);
+    }
+
+    [Fact]
     public async Task Connection_WithWrongPassword_EndsInAuthenticationFailure_WithoutCrashing()
     {
         _server.RequiredPassword = "correcta";

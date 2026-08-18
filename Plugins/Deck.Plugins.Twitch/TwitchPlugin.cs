@@ -64,10 +64,14 @@ public sealed class TwitchPlugin : IPlugin
 
     public IReadOnlyList<PluginActionDescriptor> Actions { get; } =
     [
-        new("set-title", "Cambiar título del stream", "Parámetro: title."),
-        new("set-category", "Cambiar categoría", "Parámetro: categoryId."),
-        new("create-marker", "Crear marcador", "Parámetro opcional: description."),
-        new("send-chat-message", "Enviar mensaje al chat", "Parámetro: message.")
+        new("set-title", "Cambiar título del stream", "Parámetro: title.",
+            """{"fields":[{"key":"title","label":"Título","type":"text","required":true}]}"""),
+        new("set-category", "Cambiar categoría", "Parámetro: categoryId.",
+            """{"fields":[{"key":"categoryId","label":"ID de categoría de Twitch","type":"text","required":true}]}"""),
+        new("create-marker", "Crear marcador", "Parámetro opcional: description.",
+            """{"fields":[{"key":"description","label":"Descripción (opcional)","type":"text","required":false}]}"""),
+        new("send-chat-message", "Enviar mensaje al chat", "Parámetro: message.",
+            """{"fields":[{"key":"message","label":"Mensaje","type":"text","required":true}]}""")
     ];
 
     public event EventHandler<PluginEvent>? EventRaised;

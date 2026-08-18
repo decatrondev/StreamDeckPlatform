@@ -26,4 +26,13 @@ public interface IPlugin : IAsyncDisposable
     Task DisconnectAsync(CancellationToken ct = default);
 
     Task<PluginActionResult> ExecuteActionAsync(string actionId, string parametersJson, CancellationToken ct = default);
+
+    // Opciones en vivo para un campo "select" dinámico del schema de una
+    // acción (ver PluginActionDescriptor.ParametersSchemaJson) — ej. las
+    // escenas reales de un OBS ya conectado. Implementación por default
+    // (sin opciones) para no romper a los plugins que no tienen ningún
+    // campo dinámico — solo OBS la sobreescribe por ahora.
+    Task<IReadOnlyList<ParameterOption>> GetParameterOptionsAsync(
+        string actionId, string parameterKey, CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<ParameterOption>>([]);
 }

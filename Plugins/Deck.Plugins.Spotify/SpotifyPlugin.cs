@@ -68,7 +68,8 @@ public sealed class SpotifyPlugin : IPlugin
         new("pause", "Pausar"),
         new("next", "Siguiente canción"),
         new("previous", "Canción anterior"),
-        new("set-volume", "Cambiar volumen", "Parámetro: volume (0-100).")
+        new("set-volume", "Cambiar volumen", "Parámetro: volume (0-100).",
+            """{"fields":[{"key":"volume","label":"Volumen (0-100)","type":"number","required":true}]}""")
     ];
 
     public event EventHandler<PluginEvent>? EventRaised;
