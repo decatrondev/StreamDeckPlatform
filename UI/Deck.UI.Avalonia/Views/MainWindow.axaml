@@ -196,6 +196,10 @@
                         <TextBox Classes="FlowdeckField" PlaceholderText="Argumentos (opcional)" Text="{Binding Args}"
                                   IsVisible="{Binding IsSystemAction}" />
 
+                        <TextBlock FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" TextWrapping="Wrap">
+                            <Run Text="En cualquier campo de texto podés usar {dia}, {fecha}, {hora}, {categoria}, {titulo}, {viewers}, {ultimo_seguidor} — se completan solas al apretar la tecla." />
+                        </TextBlock>
+
                         <!-- Formulario armado a partir del ParametersSchemaJson de la
                              acción elegida — reemplaza el JSON crudo que había antes. -->
                         <ItemsControl ItemsSource="{Binding Fields}" IsVisible="{Binding !IsSystemAction}">

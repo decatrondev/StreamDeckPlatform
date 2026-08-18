@@ -109,6 +109,31 @@ public class DecatronPluginTests : IAsyncLifetime
         Assert.Empty(options);
     }
 
+    [Fact]
+    public async Task GetLiveVariablesAsync_ReturnsAllFourValues()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+        _server.LiveCategory = "Valorant";
+        _server.LiveTitle = "clasificatoria";
+        _server.LiveViewers = 123;
+        _server.LastFollower = "nuevo_seguidor";
+
+        var values = await _plugin.GetLiveVariablesAsync();
+
+        Assert.Equal("Valorant", values["{categoria}"]);
+        Assert.Equal("clasificatoria", values["{titulo}"]);
+        Assert.Equal("123", values["{viewers}"]);
+        Assert.Equal("nuevo_seguidor", values["{ultimo_seguidor}"]);
+    }
+
+    [Fact]
+    public async Task GetLiveVariablesAsync_WithoutDecatronConnected_ReturnsEmpty_DoesNotThrow()
+    {
+        var values = await _plugin.GetLiveVariablesAsync();
+
+        Assert.Empty(values);
+    }
+
     private sealed class TestPluginContext(ICredentialStore credentials) : IPluginContext
     {
         public ICredentialStore Credentials { get; } = credentials;

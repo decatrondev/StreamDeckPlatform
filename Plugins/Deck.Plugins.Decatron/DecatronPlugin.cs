@@ -146,6 +146,48 @@ public sealed class DecatronPlugin : IPlugin
         }
     }
 
+    // Consumido por ActionExecutor (vía el delegado que arma DeckAppService)
+    // para resolver {categoria}/{titulo}/{viewers}/{ultimo_seguidor} — no es
+    // parte del contrato IPlugin porque es específico de Decatron, no algo
+    // que todo plugin deba saber hacer.
+    public async Task<IReadOnlyDictionary<string, string>> GetLiveVariablesAsync(CancellationToken ct = default)
+    {
+        var empty = new Dictionary<string, string>();
+
+        var token = await GetTokenAsync(ct);
+        if (token is null) return empty;
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/twitch/live-info");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode) return empty;
+
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
+            var root = doc.RootElement;
+            var values = new Dictionary<string, string>();
+
+            if (root.TryGetProperty("category", out var category) && category.ValueKind == JsonValueKind.String)
+                values["{categoria}"] = category.GetString()!;
+            if (root.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                values["{titulo}"] = title.GetString()!;
+            if (root.TryGetProperty("viewers", out var viewers) && viewers.ValueKind == JsonValueKind.Number)
+                values["{viewers}"] = viewers.GetInt32().ToString();
+            if (root.TryGetProperty("lastFollower", out var lastFollower) && lastFollower.ValueKind == JsonValueKind.String)
+                values["{ultimo_seguidor}"] = lastFollower.GetString()!;
+
+            return values;
+        }
+        catch
+        {
+            // Sin red, Decatron caído, stream offline sin datos, lo que sea —
+            // esas variables se quedan sin reemplazar, no rompe la ejecución.
+            return empty;
+        }
+    }
+
     private async Task<string?> GetTokenAsync(CancellationToken ct) =>
         _context is null ? null : await _context.Credentials.GetAsync("access-token", ct);
 

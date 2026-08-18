@@ -76,10 +76,11 @@ public class DeckAppService
         // listener local de OAuth y se registre su redirect URI en cada
         // dashboard — cargarlos ya mismo no rompe nada, cada uno maneja "sin
         // conectar todavía" sin tirar excepción (ver Fases 3-6).
+        var decatron = new DecatronPlugin();
         var loadedPlugins = new[]
         {
             plugins.LoadInstance(new SystemActionsPlugin()),
-            plugins.LoadInstance(new DecatronPlugin()),
+            plugins.LoadInstance(decatron),
             plugins.LoadInstance(new ObsPlugin()),
             plugins.LoadInstance(new SpotifyPlugin(PluginClientIds.Spotify)),
             plugins.LoadInstance(new DiscordPlugin(PluginClientIds.Discord)),
@@ -94,7 +95,13 @@ public class DeckAppService
 
         await SeedIfEmptyAsync(db);
 
-        return new DeckAppService(db, plugins, new ActionExecutor(plugins), credentials, icons);
+        // {categoria}/{titulo}/{viewers}/{ultimo_seguidor} se resuelven vía
+        // el mismo DecatronPlugin que ya maneja las acciones — Deck.Core no
+        // puede referenciarlo directo (los plugins dependen del Core, no al
+        // revés), así que ActionExecutor solo conoce el delegado.
+        var executor = new ActionExecutor(plugins, decatron.GetLiveVariablesAsync);
+
+        return new DeckAppService(db, plugins, executor, credentials, icons);
     }
 
     private static async Task SeedIfEmptyAsync(DeckDbContext db)

@@ -23,6 +23,11 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
     public string? LastReceivedGameId { get; private set; }
     public string? LastReceivedTitle { get; private set; }
     public List<(string Id, string Name)> GameSearchResults { get; set; } = [];
+    public bool IsLive { get; set; } = true;
+    public string? LiveCategory { get; set; } = "Just Chatting";
+    public string? LiveTitle { get; set; } = "probando Flowdeck";
+    public int? LiveViewers { get; set; } = 42;
+    public string? LastFollower { get; set; } = "un_seguidor_cualquiera";
 
     public FakeDecatronApiServer()
     {
@@ -84,6 +89,20 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
                 var doc = await ReadJsonBodyAsync(context);
                 LastReceivedTitle = doc.RootElement.GetProperty("title").GetString();
                 WriteJson(context, 200, new { success = true, message = "Title updated" });
+                return;
+            }
+
+            if (path == "/api/v1/twitch/live-info")
+            {
+                WriteJson(context, 200, new
+                {
+                    success = true,
+                    isLive = IsLive,
+                    category = LiveCategory,
+                    title = LiveTitle,
+                    viewers = LiveViewers,
+                    lastFollower = LastFollower
+                });
                 return;
             }
 
