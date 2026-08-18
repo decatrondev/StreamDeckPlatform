@@ -32,6 +32,15 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsDialogOpen { get; set; }
 
     [ObservableProperty]
+    public partial bool IsResultDialogOpen { get; set; }
+
+    [ObservableProperty]
+    public partial string? ResultDialogTitle { get; set; }
+
+    [ObservableProperty]
+    public partial string? ResultDialogMessage { get; set; }
+
+    [ObservableProperty]
     public partial bool IsSettingsPageOpen { get; set; }
 
     [ObservableProperty]
@@ -44,6 +53,7 @@ public partial class MainViewModel : ViewModelBase
 
     public IRelayCommand NavigateBackCommand { get; }
     public IRelayCommand OpenSettingsCommand { get; }
+    public IRelayCommand CloseResultDialogCommand { get; }
 
     // El diseñador de Avalonia instancia esto sin argumentos — solo para
     // previsualización, nunca corre en runtime real (ver App.axaml.cs).
@@ -54,6 +64,7 @@ public partial class MainViewModel : ViewModelBase
         _app = app;
         NavigateBackCommand = new AsyncRelayCommand(NavigateBackAsync, () => CanNavigateBack);
         OpenSettingsCommand = new RelayCommand(OpenSettings);
+        CloseResultDialogCommand = new RelayCommand(() => IsResultDialogOpen = false);
     }
 
     private void OpenSettings()
@@ -176,9 +187,21 @@ public partial class MainViewModel : ViewModelBase
         var result = await _app.Executor.RunAsync(steps);
         button.IsRunning = false;
 
-        StatusMessage = result.Success
-            ? $"✓ {button.Label}: {result.StepResults[^1].Message}"
-            : $"✗ {button.Label}: {result.StepResults[result.FailedAtStep!.Value].Message}";
+        var lastMessage = result.Success
+            ? result.StepResults[^1].Message
+            : result.StepResults[result.FailedAtStep!.Value].Message;
+
+        StatusMessage = $"{(result.Success ? "✓" : "✗")} {button.Label}: {lastMessage}";
+
+        // La línea de estado no tiene scroll ni wrap — para algo largo (ej. la
+        // salida de "Ejecutar comando") queda cortada e ilegible. A partir de
+        // cierto tamaño, se muestra completo en una ventana aparte.
+        if (lastMessage is { Length: > 160 } || lastMessage?.Contains('\n') == true)
+        {
+            ResultDialogTitle = button.Label;
+            ResultDialogMessage = lastMessage;
+            IsResultDialogOpen = true;
+        }
     }
 
     private async Task OpenAssignDialogAsync(ButtonSlotViewModel button)

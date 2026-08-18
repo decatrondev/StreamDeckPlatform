@@ -268,6 +268,28 @@
             </Border>
         </Border>
 
+        <!-- Resultado de una acción con salida larga (ej. "Ejecutar comando")
+             — la línea de estado de abajo de la grilla no tiene scroll ni
+             wrap, así que un resultado largo quedaba cortado e ilegible. -->
+        <Border Grid.Row="0" Grid.RowSpan="2" Background="#B0000000"
+                IsVisible="{Binding IsResultDialogOpen}">
+            <Border Width="480" MaxHeight="420" Background="{StaticResource FlowdeckSurfaceBrush}"
+                    BorderBrush="{StaticResource FlowdeckLineBrush}" BorderThickness="1"
+                    CornerRadius="12" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding ResultDialogTitle}" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{StaticResource FlowdeckInkBrush}" Margin="0,0,0,12" />
+                    <Button DockPanel.Dock="Bottom" Content="Cerrar" Classes="Secondary" Command="{Binding CloseResultDialogCommand}"
+                            HorizontalAlignment="Right" Margin="0,12,0,0" />
+                    <ScrollViewer>
+                        <TextBlock Text="{Binding ResultDialogMessage}" TextWrapping="Wrap"
+                                   FontFamily="Consolas,monospace" FontSize="12"
+                                   Foreground="{StaticResource FlowdeckInkMutedBrush}" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Border>
+
         <!-- Página de Ajustes — mismo patrón de dos "páginas" turnándose la
              fila 1 que la grilla de teclas, no un overlay/modal.
              IsVisible se evalúa contra MainViewModel (DataContext heredado
