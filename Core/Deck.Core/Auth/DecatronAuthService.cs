@@ -30,7 +30,7 @@ public sealed class DecatronAuthService
     // controla qué puede llegar a pedir la app, esta constante es lo que la
     // app REALMENTE pide en cada login). Quien ya estaba conectado de antes
     // necesita reconectar una vez para que el token nuevo incluya los scopes.
-    private const string Scope = "read:profile action:chat action:category action:title read:games";
+    private const string Scope = "read:profile action:chat action:category action:title read:games read:stream action:timer";
 
     // Tiene que matchear EXACTO (con la barra final) lo que se registre
     // como redirect URI en el Developer Portal del bot — el backend valida

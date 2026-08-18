@@ -28,6 +28,9 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
     public string? LiveTitle { get; set; } = "probando Flowdeck";
     public int? LiveViewers { get; set; } = 42;
     public string? LastFollower { get; set; } = "un_seguidor_cualquiera";
+    public List<string> ReceivedTimerCalls { get; } = [];
+    public int? LastReceivedDuration { get; private set; }
+    public int? LastReceivedSeconds { get; private set; }
 
     public FakeDecatronApiServer()
     {
@@ -103,6 +106,31 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
                     viewers = LiveViewers,
                     lastFollower = LastFollower
                 });
+                return;
+            }
+
+            if (path is "/api/v1/timer/pause" or "/api/v1/timer/resume" or "/api/v1/timer/stop")
+            {
+                ReceivedTimerCalls.Add(path);
+                WriteJson(context, 200, new { success = true, message = "ok" });
+                return;
+            }
+
+            if (path == "/api/v1/timer/start")
+            {
+                ReceivedTimerCalls.Add(path);
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedDuration = doc.RootElement.TryGetProperty("duration", out var d) && d.ValueKind == JsonValueKind.Number ? d.GetInt32() : null;
+                WriteJson(context, 200, new { success = true, message = "Timer started" });
+                return;
+            }
+
+            if (path == "/api/v1/timer/add")
+            {
+                ReceivedTimerCalls.Add(path);
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedSeconds = doc.RootElement.GetProperty("seconds").GetInt32();
+                WriteJson(context, 200, new { success = true, message = "Added", newTotalTime = 0 });
                 return;
             }
 

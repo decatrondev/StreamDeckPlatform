@@ -53,7 +53,14 @@ public sealed class DecatronPlugin : IPlugin
         new("set-category", "Cambiar categoría", "Buscá el juego/categoría por nombre — mismo buscador que usa !game.",
             """{"fields":[{"key":"gameId","label":"Categoría","type":"search","required":true}]}"""),
         new("set-title", "Cambiar título del stream", "Parámetro: title.",
-            """{"fields":[{"key":"title","label":"Título","type":"text","required":true}]}""")
+            """{"fields":[{"key":"title","label":"Título","type":"text","required":true}]}"""),
+        new("timer-start", "Iniciar timer", "Duración opcional en segundos — vacío usa la última configurada.",
+            """{"fields":[{"key":"duration","label":"Duración en segundos (opcional)","type":"number","required":false}]}"""),
+        new("timer-pause", "Pausar timer"),
+        new("timer-resume", "Reanudar timer"),
+        new("timer-stop", "Detener timer"),
+        new("timer-add", "Agregar tiempo al timer", "Segundos a sumar (puede ser negativo para restar).",
+            """{"fields":[{"key":"seconds","label":"Segundos","type":"number","required":true}]}""")
     ];
 
     // Nunca se dispara — este plugin no tiene estado de conexión ni eventos
@@ -89,6 +96,11 @@ public sealed class DecatronPlugin : IPlugin
             "send-chat-message" => await SendChatMessageAsync(token, parameters, ct),
             "set-category" => await SetCategoryAsync(token, parameters, ct),
             "set-title" => await SetTitleAsync(token, parameters, ct),
+            "timer-start" => await TimerStartAsync(token, parameters, ct),
+            "timer-pause" => await SimplePostAsync(token, "/timer/pause", "Timer pausado.", ct),
+            "timer-resume" => await SimplePostAsync(token, "/timer/resume", "Timer reanudado.", ct),
+            "timer-stop" => await SimplePostAsync(token, "/timer/stop", "Timer detenido.", ct),
+            "timer-add" => await TimerAddAsync(token, parameters, ct),
             _ => PluginActionResult.Fail($"Acción desconocida: '{actionId}'.")
         };
     }
@@ -112,6 +124,28 @@ public sealed class DecatronPlugin : IPlugin
         var title = parameters.GetProperty("title").GetString()!;
         var (ok, body) = await PostAsync(token, "/twitch/title", new { title }, ct);
         return ok ? PluginActionResult.Ok("Título actualizado.") : PluginActionResult.Fail($"Decatron rechazó el cambio de título: {body}");
+    }
+
+    private async Task<PluginActionResult> TimerStartAsync(string token, JsonElement parameters, CancellationToken ct)
+    {
+        var duration = parameters.TryGetProperty("duration", out var d) && d.ValueKind == JsonValueKind.Number
+            ? (int?)d.GetInt32()
+            : null;
+        var (ok, body) = await PostAsync(token, "/timer/start", new { duration }, ct);
+        return ok ? PluginActionResult.Ok("Timer iniciado.") : PluginActionResult.Fail($"Decatron rechazó iniciar el timer: {body}");
+    }
+
+    private async Task<PluginActionResult> TimerAddAsync(string token, JsonElement parameters, CancellationToken ct)
+    {
+        var seconds = parameters.GetProperty("seconds").GetInt32();
+        var (ok, body) = await PostAsync(token, "/timer/add", new { seconds }, ct);
+        return ok ? PluginActionResult.Ok($"{seconds}s agregados al timer.") : PluginActionResult.Fail($"Decatron rechazó agregar tiempo: {body}");
+    }
+
+    private async Task<PluginActionResult> SimplePostAsync(string token, string path, string okMessage, CancellationToken ct)
+    {
+        var (ok, body) = await PostAsync(token, path, new { }, ct);
+        return ok ? PluginActionResult.Ok(okMessage) : PluginActionResult.Fail($"Decatron rechazó la acción: {body}");
     }
 
     public async Task<IReadOnlyList<ParameterOption>> SearchParameterOptionsAsync(

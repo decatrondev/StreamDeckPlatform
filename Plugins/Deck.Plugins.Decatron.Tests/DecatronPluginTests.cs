@@ -134,6 +134,53 @@ public class DecatronPluginTests : IAsyncLifetime
         Assert.Empty(values);
     }
 
+    [Theory]
+    [InlineData("timer-pause", "/api/v1/timer/pause")]
+    [InlineData("timer-resume", "/api/v1/timer/resume")]
+    [InlineData("timer-stop", "/api/v1/timer/stop")]
+    public async Task ExecuteActionAsync_TimerControlActions_CallCorrectEndpoint(string actionId, string expectedPath)
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync(actionId, "{}");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Contains(expectedPath, _server.ReceivedTimerCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteActionAsync_TimerStart_WithDuration_SendsIt()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("timer-start", """{"duration":300}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(300, _server.LastReceivedDuration);
+    }
+
+    [Fact]
+    public async Task ExecuteActionAsync_TimerStart_WithoutDuration_SendsNull()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("timer-start", "{}");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Null(_server.LastReceivedDuration);
+    }
+
+    [Fact]
+    public async Task ExecuteActionAsync_TimerAdd_SendsSeconds()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("timer-add", """{"seconds":30}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(30, _server.LastReceivedSeconds);
+    }
+
     private sealed class TestPluginContext(ICredentialStore credentials) : IPluginContext
     {
         public ICredentialStore Credentials { get; } = credentials;
