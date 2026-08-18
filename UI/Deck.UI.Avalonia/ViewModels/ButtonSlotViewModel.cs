@@ -17,6 +17,12 @@ public partial class ButtonSlotViewModel : ViewModelBase
     public int Row { get; }
     public int Column { get; }
 
+    // Fila 0 / columna 0 de cualquier página que no sea la raíz — reservada
+    // para volver a la carpeta de afuera, no se puede editar ni asignar nada
+    // ahí (ver MainViewModel.LoadCurrentPageAsync). Si esa posición ya tenía
+    // algo asignado de antes, esa asignación deja de usarse.
+    public bool IsBackButton { get; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DisplayLabel))]
     public partial string? Label { get; set; }
@@ -43,7 +49,7 @@ public partial class ButtonSlotViewModel : ViewModelBase
     // no se pinta — ver el template de la grilla en MainWindow.axaml.
     public bool HasIcon => IconBitmap is not null || IconEmoji is not null;
 
-    public string DisplayLabel => Label is { Length: > 0 } label ? label : "+";
+    public string DisplayLabel => IsBackButton ? "Volver" : Label is { Length: > 0 } label ? label : "+";
 
     public string StatusGlyph => IsRunning ? "…" : IsFolder ? "▸" : "";
 
@@ -55,10 +61,11 @@ public partial class ButtonSlotViewModel : ViewModelBase
     public event Func<ButtonSlotViewModel, Task>? EditRequested;
     public event Func<ButtonSlotViewModel, Task>? ClearRequested;
 
-    public ButtonSlotViewModel(int row, int column, ButtonSlot? slot, IconStore? icons = null)
+    public ButtonSlotViewModel(int row, int column, ButtonSlot? slot, IconStore? icons = null, bool isBackButton = false)
     {
         Row = row;
         Column = column;
+        IsBackButton = isBackButton;
         _icons = icons;
         ActivateCommand = new AsyncRelayCommand(() => Activated?.Invoke(this) ?? Task.CompletedTask);
         EditCommand = new AsyncRelayCommand(() => EditRequested?.Invoke(this) ?? Task.CompletedTask, () => IsAssigned);

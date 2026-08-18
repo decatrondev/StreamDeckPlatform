@@ -102,6 +102,7 @@
                         <DataTemplate x:DataType="vm:ButtonSlotViewModel">
                             <Button Classes="DeckKey" Classes.Assigned="{Binding IsAssigned}"
                                     Classes.Folder="{Binding IsFolder}"
+                                    Classes.Back="{Binding IsBackButton}"
                                     Command="{Binding ActivateCommand}"
                                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                                     Margin="5" MinHeight="72">
@@ -112,10 +113,23 @@
                                     </ContextMenu>
                                 </Button.ContextMenu>
                                 <Grid>
+                                    <!-- Reservada para volver (fila 0/col 0 de cualquier carpeta) —
+                                         estilo bien distinto, no se confunde con una tecla común. -->
+                                    <StackPanel Spacing="2" HorizontalAlignment="Center" IsVisible="{Binding IsBackButton}">
+                                        <TextBlock Text="←" FontSize="26" HorizontalAlignment="Center" />
+                                        <TextBlock Text="Volver" FontSize="11" HorizontalAlignment="Center" />
+                                    </StackPanel>
+
                                     <!-- Con ícono, ocupa toda la tecla y el label de texto no se
                                          pinta (estilo Stream Deck real) — sin ícono, el layout de
                                          siempre (glyph de estado + nombre). -->
-                                    <StackPanel Spacing="4" HorizontalAlignment="Center" IsVisible="{Binding !HasIcon}">
+                                    <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                        <StackPanel.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="!HasIcon" />
+                                                <Binding Path="!IsBackButton" />
+                                            </MultiBinding>
+                                        </StackPanel.IsVisible>
                                         <TextBlock Text="{Binding StatusGlyph}" HorizontalAlignment="Center"
                                                    Foreground="{StaticResource FlowdeckAccentLightBrush}" />
                                         <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap"

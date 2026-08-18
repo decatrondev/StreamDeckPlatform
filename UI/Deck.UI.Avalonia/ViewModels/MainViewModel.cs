@@ -132,12 +132,19 @@ public partial class MainViewModel : ViewModelBase
         foreach (var old in Buttons) old.Activated -= OnButtonActivatedAsync;
         Buttons.Clear();
 
+        // Fila 0 / columna 0 de cualquier página que no sea la raíz queda
+        // reservada para volver — si esa posición ya tenía algo asignado, esa
+        // asignación simplemente deja de mostrarse (no se borra de la DB, no
+        // hace falta migrar nada por eso).
+        var reserveBackTile = _breadcrumb.Count > 1;
+
         for (var row = 0; row < page.Rows; row++)
         {
             for (var col = 0; col < page.Columns; col++)
             {
-                var slot = slots.FirstOrDefault(s => s.Row == row && s.Column == col);
-                var vm = new ButtonSlotViewModel(row, col, slot, _app.Icons);
+                var isBackTile = reserveBackTile && row == 0 && col == 0;
+                var slot = isBackTile ? null : slots.FirstOrDefault(s => s.Row == row && s.Column == col);
+                var vm = new ButtonSlotViewModel(row, col, slot, _app.Icons, isBackTile);
                 vm.Activated += OnButtonActivatedAsync;
                 vm.EditRequested += OpenAssignDialogAsync;
                 vm.ClearRequested += OnButtonClearRequestedAsync;
@@ -165,6 +172,12 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task OnButtonActivatedAsync(ButtonSlotViewModel button)
     {
+        if (button.IsBackButton)
+        {
+            await NavigateBackAsync();
+            return;
+        }
+
         if (button.Slot is null)
         {
             await OpenAssignDialogAsync(button);

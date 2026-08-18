@@ -58,6 +58,18 @@
     <Setter Property="BorderBrush" Value="{StaticResource FlowdeckAccent}" />
   </Style>
 
+  <!-- Tecla reservada para volver — fondo relleno en vez de solo el borde,
+       para que no se confunda ni con una tecla vacía ni con una carpeta. -->
+  <Style Selector="Button.DeckKey.Back">
+    <Setter Property="Background" Value="{StaticResource FlowdeckAccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Button.DeckKey.Back:pointerover">
+    <Setter Property="Background" Value="{StaticResource FlowdeckAccentLightBrush}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
   <!-- Punto de estado del sidebar de categorías en Ajustes (●/○). -->
   <Style Selector="Ellipse.StatusDot">
     <Setter Property="Fill" Value="{StaticResource FlowdeckInkFaintBrush}" />
