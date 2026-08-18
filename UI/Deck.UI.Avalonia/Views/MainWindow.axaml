@@ -421,14 +421,18 @@
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=twitch}">
-                        <TextBlock Text="El login propio de Twitch todavía no está disponible desde la app — las acciones de Twitch van a llegar vía la cuenta de Decatron."
+                        <TextBlock Text="Es un login aparte del de Decatron — Decatron solo identifica tu cuenta, esto autoriza a Flowdeck a cambiar título/categoría y mandar mensajes al chat en tu nombre."
                                    TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
+                        <Button Content="Conectar con Twitch" Classes="Primary" Command="{Binding ConnectTwitchCommand}"
+                                HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=spotify}">
-                        <TextBlock Text="El login de Spotify todavía no está disponible desde la app — llega en una próxima actualización."
+                        <TextBlock Text="Autoriza a Flowdeck a controlar la reproducción (play/pause, siguiente, volumen)."
                                    TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
+                        <Button Content="Conectar con Spotify" Classes="Primary" Command="{Binding ConnectSpotifyCommand}"
+                                HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"

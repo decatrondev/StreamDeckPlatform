@@ -33,6 +33,13 @@ public partial class SettingsCategoryViewModel(string id, string name) : Observa
 // para reflejar eso, la lógica de cada plugin no cambió.
 public partial class SettingsPageViewModel : ViewModelBase
 {
+    // Loopback propio de cada plugin — puerto distinto al de Decatron
+    // (51823) para no chocar. Tienen que estar registrados EXACTOS (con la
+    // barra final) como redirect URI en el dashboard de cada plataforma;
+    // hasta ahora esos dashboards solo tenían el de twitch.decatron.net.
+    private const string TwitchRedirectUri = "http://127.0.0.1:51824/callback/";
+    private const string SpotifyRedirectUri = "http://127.0.0.1:51825/callback/";
+
     private readonly DeckAppService _app;
     private readonly DecatronAuthService? _decatronAuth;
 
@@ -81,6 +88,8 @@ public partial class SettingsPageViewModel : ViewModelBase
     public IAsyncRelayCommand SaveObsCommand { get; }
     public IAsyncRelayCommand ConnectDecatronCommand { get; }
     public IAsyncRelayCommand DisconnectDecatronCommand { get; }
+    public IAsyncRelayCommand ConnectTwitchCommand { get; }
+    public IAsyncRelayCommand ConnectSpotifyCommand { get; }
     public IRelayCommand CloseCommand { get; }
 
     public event Action? Closed;
@@ -95,6 +104,8 @@ public partial class SettingsPageViewModel : ViewModelBase
         SaveObsCommand = new AsyncRelayCommand(SaveObsAsync);
         ConnectDecatronCommand = new AsyncRelayCommand(ConnectDecatronAsync);
         DisconnectDecatronCommand = new AsyncRelayCommand(DisconnectDecatronAsync);
+        ConnectTwitchCommand = new AsyncRelayCommand(ConnectTwitchAsync);
+        ConnectSpotifyCommand = new AsyncRelayCommand(ConnectSpotifyAsync);
         CloseCommand = new RelayCommand(() => Closed?.Invoke());
         RefreshStatuses();
         _ = RefreshDecatronStatusAsync();
@@ -204,5 +215,56 @@ public partial class SettingsPageViewModel : ViewModelBase
         DecatronStatus = "sin conectar";
         Category("decatron").IsConnected = false;
         FeedbackMessage = "Cuenta de Decatron desconectada.";
+    }
+
+    // Login directo contra Twitch (distinto del de Decatron) — hace falta
+    // porque Decatron nunca le entrega a Flowdeck un access token de la API
+    // real de Twitch, solo identifica la cuenta del lado del bot. Para poder
+    // ejecutar acciones (cambiar título, categoría, chat) el plugin necesita
+    // su propia autorización con los scopes que esas acciones piden.
+    private async Task ConnectTwitchAsync()
+    {
+        var plugin = GetInstance<TwitchPlugin>(TwitchPlugin.PluginId);
+        if (plugin is null) return;
+
+        FeedbackMessage = "Abriendo el navegador para conectar con Twitch…";
+        try
+        {
+            var authUrl = plugin.BeginAuthorization(TwitchRedirectUri);
+            var code = await PluginOAuthLoopback.WaitForCodeAsync(authUrl, TwitchRedirectUri);
+            await plugin.CompleteAuthorizationAsync(code);
+            FeedbackMessage = "Cuenta de Twitch conectada.";
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = $"No se pudo conectar con Twitch: {ex.Message}";
+        }
+        finally
+        {
+            RefreshStatuses();
+        }
+    }
+
+    private async Task ConnectSpotifyAsync()
+    {
+        var plugin = GetInstance<SpotifyPlugin>(SpotifyPlugin.PluginId);
+        if (plugin is null) return;
+
+        FeedbackMessage = "Abriendo el navegador para conectar con Spotify…";
+        try
+        {
+            var authUrl = plugin.BeginAuthorization(SpotifyRedirectUri);
+            var code = await PluginOAuthLoopback.WaitForCodeAsync(authUrl, SpotifyRedirectUri);
+            await plugin.CompleteAuthorizationAsync(code);
+            FeedbackMessage = "Cuenta de Spotify conectada.";
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = $"No se pudo conectar con Spotify: {ex.Message}";
+        }
+        finally
+        {
+            RefreshStatuses();
+        }
     }
 }
