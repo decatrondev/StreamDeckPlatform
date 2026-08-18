@@ -10,6 +10,7 @@
         Icon="/Assets/flowdeck.ico"
         Title="Flowdeck"
         Width="960" Height="620" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource FlowdeckGraphiteBrush}"
         ExtendClientAreaToDecorationsHint="True"
         WindowDecorations="None"
