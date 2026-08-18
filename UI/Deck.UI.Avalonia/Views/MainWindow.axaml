@@ -337,6 +337,10 @@
                                Foreground="{StaticResource FlowdeckInkFaintBrush}"
                                Margin="8,4,0,8" />
 
+                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding AppVersion}" FontSize="10"
+                               Foreground="{StaticResource FlowdeckInkFaintBrush}"
+                               Margin="8,8,0,0" />
+
                     <ListBox Classes="ProfileList" ItemsSource="{Binding Categories}"
                              SelectedItem="{Binding SelectedCategory}"
                              Background="Transparent">

@@ -43,6 +43,11 @@ public partial class SettingsPageViewModel : ViewModelBase
     private readonly DeckAppService _app;
     private readonly DecatronAuthService? _decatronAuth;
 
+    // "no sé qué versión tengo instalada" era la pregunta recurrente al
+    // reportar bugs — UpdateService.CurrentVersion ya existe (lo usa el
+    // chequeo de actualizaciones), esto solo lo expone en la UI.
+    public string AppVersion => new UpdateService().CurrentVersion is { } v ? $"Flowdeck v{v}" : "";
+
     public ObservableCollection<SettingsCategoryViewModel> Categories { get; } =
     [
         new("decatron", "Cuenta Decatron"),

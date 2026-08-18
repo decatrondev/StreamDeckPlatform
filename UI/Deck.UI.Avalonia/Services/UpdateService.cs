@@ -39,6 +39,10 @@ public sealed class UpdateService
         _manager = new UpdateManager(new GithubSource(RepoUrl, accessToken: null, prerelease: false));
     }
 
+    // Para mostrar en Ajustes — null corriendo desde el IDE o portable sin
+    // instalar vía Velopack (mismo caso que IsInstalled arriba).
+    public string? CurrentVersion => _manager.IsInstalled ? _manager.CurrentVersion?.ToString() : null;
+
     // Bloquea el arranque a propósito — es la contracara de la decisión de
     // UX de arriba. Si hay una actualización, este método nunca retorna: el
     // proceso actual termina y Velopack relanza la versión nueva.
