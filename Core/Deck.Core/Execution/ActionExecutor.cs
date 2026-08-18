@@ -26,7 +26,8 @@ public class ActionExecutor
         for (var i = 0; i < ordered.Count; i++)
         {
             var step = ordered[i];
-            var result = await _plugins.ExecuteActionAsync(step.PluginId, step.ActionId, step.ParametersJson, ct);
+            var parametersJson = TemplateVariables.Apply(step.ParametersJson);
+            var result = await _plugins.ExecuteActionAsync(step.PluginId, step.ActionId, parametersJson, ct);
             results.Add(result);
 
             if (!result.Success)

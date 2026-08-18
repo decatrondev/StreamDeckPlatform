@@ -67,6 +67,26 @@ public class ActionExecutorTests : IDisposable
         Assert.Contains("uno", result.StepResults[0].Message);
     }
 
+    [Fact]
+    public async Task RunAsync_ReplacesTemplateVariables_BeforeExecutingStep()
+    {
+        var loaded = _plugins.LoadInstance(new TestSystemPlugin());
+        await _plugins.InitializeAsync(loaded.Metadata.Id);
+
+        var buttonId = Guid.NewGuid();
+        var (path, argsTemplate) = OperatingSystem.IsWindows() ? ("cmd.exe", "/c echo {dia}") : ("/bin/sh", "-c \"echo {dia}\"");
+
+        var steps = new[]
+        {
+            new ActionStep { Id = Guid.NewGuid(), ButtonSlotId = buttonId, Order = 0, PluginId = "test-system", ActionId = "run-command", ParametersJson = JsonSerializer.Serialize(new { path, args = argsTemplate }) },
+        };
+
+        var result = await _executor.RunAsync(steps);
+
+        Assert.True(result.Success);
+        Assert.DoesNotContain("{dia}", result.StepResults[0].Message);
+    }
+
     public void Dispose()
     {
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
