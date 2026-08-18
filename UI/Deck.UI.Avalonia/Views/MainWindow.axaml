@@ -27,9 +27,9 @@
               PointerPressed="OnTitleBarPointerPressed">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
                         Margin="14,0,0,0" VerticalAlignment="Center">
-                <Ellipse Width="8" Height="8" Fill="{StaticResource FlowdeckAccentBrush}" />
+                <Image Source="/Assets/flowdeck-logo.png" Width="22" Height="22" />
                 <TextBlock Text="Flowdeck" Foreground="{StaticResource FlowdeckInkBrush}"
-                           FontWeight="SemiBold" FontSize="13" />
+                           FontWeight="SemiBold" FontSize="19" />
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal">

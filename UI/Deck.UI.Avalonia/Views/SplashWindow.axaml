@@ -22,10 +22,10 @@
             BorderBrush="{StaticResource FlowdeckLineBrush}" BorderThickness="1"
             CornerRadius="12">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
-            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                <Ellipse Width="8" Height="8" Fill="{StaticResource FlowdeckAccentBrush}" />
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                <Image Source="/Assets/flowdeck-logo.png" Width="32" Height="32" />
                 <TextBlock Text="Flowdeck" Foreground="{StaticResource FlowdeckInkBrush}"
-                           FontWeight="SemiBold" FontSize="13" />
+                           FontWeight="SemiBold" FontSize="20" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource FlowdeckInkMutedBrush}"
                        FontSize="12" HorizontalAlignment="Center" TextWrapping="Wrap"
