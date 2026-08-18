@@ -157,11 +157,63 @@ public sealed class DecatronAuthService
         return (code, state, error);
     }
 
+    // Mismos tokens de color que FlowdeckTheme.axaml (la app) y
+    // flowdeck.decatron.net — esta pestaña vive dos segundos, pero es lo
+    // último que ve el usuario del lado del navegador antes de volver a la
+    // app, así que tiene que sentirse igual de cuidada. Intenta cerrarse
+    // sola (funciona si el navegador la trata como pestaña "de script"; si
+    // no, el texto ya le dice al usuario que la cierre a mano).
     private static async Task RespondAsync(HttpListenerContext context, bool success)
     {
-        var html = success
-            ? "<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4rem\"><h2>Listo — ya podés cerrar esta pestaña.</h2></body></html>"
-            : "<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4rem\"><h2>Algo falló — volvé a Flowdeck e intentá de nuevo.</h2></body></html>";
+        var (icon, heading, subtext) = success
+            ? ("""<path d="M7 13l3 3 7-7" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>""",
+               "Listo.",
+               "Ya podés volver a Flowdeck — esta pestaña se cierra sola.")
+            : ("""<path d="M8 8l8 8M16 8l-8 8" stroke="#EF4444" stroke-width="2.2" stroke-linecap="round"/>""",
+               "Algo falló.",
+               "Volvé a Flowdeck e intentá conectar de nuevo.");
+
+        var html = $$"""
+            <!doctype html>
+            <html lang="es">
+            <head>
+            <meta charset="utf-8" />
+            <title>Flowdeck</title>
+            <style>
+              :root { color-scheme: dark; }
+              * { box-sizing: border-box; }
+              body {
+                margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+                background: #14171C; color: #E7EAEE;
+                font-family: -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+              }
+              .card {
+                width: 320px; padding: 28px 32px; text-align: center;
+                background: #1C2028; border: 1px solid #2C323D; border-radius: 12px;
+              }
+              .brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 22px; }
+              .dot { width: 8px; height: 8px; border-radius: 50%; background: #2563EB; }
+              .wordmark { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #E7EAEE; }
+              .icon-ring {
+                width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(37, 99, 235, 0.12);
+              }
+              h1 { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
+              p { font-size: 13px; line-height: 1.5; color: #8A94A6; margin: 0; }
+            </style>
+            </head>
+            <body>
+              <div class="card">
+                <div class="brand"><span class="dot"></span><span class="wordmark">Flowdeck</span></div>
+                <div class="icon-ring"><svg width="24" height="24" viewBox="0 0 24 24">{{icon}}</svg></div>
+                <h1>{{heading}}</h1>
+                <p>{{subtext}}</p>
+              </div>
+              <script>setTimeout(function () { window.close(); }, 900);</script>
+            </body>
+            </html>
+            """;
 
         var bytes = Encoding.UTF8.GetBytes(html);
         context.Response.ContentType = "text/html; charset=utf-8";
