@@ -33,6 +33,7 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
     public int? LastReceivedSeconds { get; private set; }
     public List<(string Id, string Name)> Sounds { get; set; } = [];
     public string? LastReceivedSoundId { get; private set; }
+    public string? LastReceivedEventType { get; private set; }
 
     public FakeDecatronApiServer()
     {
@@ -151,6 +152,14 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
                 var doc = await ReadJsonBodyAsync(context);
                 LastReceivedSoundId = doc.RootElement.GetProperty("soundId").GetString();
                 WriteJson(context, 200, new { success = true, message = "Sound alert triggered" });
+                return;
+            }
+
+            if (path == "/api/v1/alerts/trigger")
+            {
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedEventType = doc.RootElement.GetProperty("eventType").GetString();
+                WriteJson(context, 200, new { success = true, message = "Alert triggered" });
                 return;
             }
 

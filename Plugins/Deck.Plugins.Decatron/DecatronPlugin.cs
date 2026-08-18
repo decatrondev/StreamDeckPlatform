@@ -62,7 +62,9 @@ public sealed class DecatronPlugin : IPlugin
         new("timer-add", "Agregar tiempo al timer", "Segundos a sumar (puede ser negativo para restar).",
             """{"fields":[{"key":"seconds","label":"Segundos","type":"number","required":true}]}"""),
         new("play-sound", "Reproducir Sound Alert", "Uno de los que ya configuraste en el dashboard.",
-            """{"fields":[{"key":"soundId","label":"Sonido","type":"select","dynamic":true,"required":true}]}""")
+            """{"fields":[{"key":"soundId","label":"Sonido","type":"select","dynamic":true,"required":true}]}"""),
+        new("trigger-alert", "Disparar alerta", "eventType: follow, subs, bits, giftSubs, raids, resubs o hypeTrain (según lo que tengas configurado en Alertas de Eventos).",
+            """{"fields":[{"key":"eventType","label":"Tipo de evento","type":"text","required":true},{"key":"username","label":"Usuario (opcional)","type":"text","required":false},{"key":"message","label":"Mensaje (opcional)","type":"text","required":false},{"key":"amount","label":"Monto (opcional)","type":"number","required":false}]}""")
     ];
 
     // Nunca se dispara — este plugin no tiene estado de conexión ni eventos
@@ -104,6 +106,7 @@ public sealed class DecatronPlugin : IPlugin
             "timer-stop" => await SimplePostAsync(token, "/timer/stop", "Timer detenido.", ct),
             "timer-add" => await TimerAddAsync(token, parameters, ct),
             "play-sound" => await PlaySoundAsync(token, parameters, ct),
+            "trigger-alert" => await TriggerAlertAsync(token, parameters, ct),
             _ => PluginActionResult.Fail($"Acción desconocida: '{actionId}'.")
         };
     }
@@ -156,6 +159,17 @@ public sealed class DecatronPlugin : IPlugin
         var soundId = parameters.GetProperty("soundId").GetString()!;
         var (ok, body) = await PostAsync(token, "/sounds/play", new { soundId }, ct);
         return ok ? PluginActionResult.Ok("Sound Alert disparado.") : PluginActionResult.Fail($"Decatron rechazó reproducir el sonido: {body}");
+    }
+
+    private async Task<PluginActionResult> TriggerAlertAsync(string token, JsonElement parameters, CancellationToken ct)
+    {
+        var eventType = parameters.GetProperty("eventType").GetString()!;
+        var username = parameters.TryGetProperty("username", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null;
+        var message = parameters.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() : null;
+        var amount = parameters.TryGetProperty("amount", out var a) && a.ValueKind == JsonValueKind.Number ? (int?)a.GetInt32() : null;
+
+        var (ok, body) = await PostAsync(token, "/alerts/trigger", new { eventType, username, message, amount }, ct);
+        return ok ? PluginActionResult.Ok("Alerta disparada.") : PluginActionResult.Fail($"Decatron rechazó la alerta: {body}");
     }
 
     // Lista fija (no búsqueda en vivo como categorías) — se trae una sola vez

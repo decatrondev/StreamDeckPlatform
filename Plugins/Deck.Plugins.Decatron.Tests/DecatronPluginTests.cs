@@ -205,6 +205,17 @@ public class DecatronPluginTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ExecuteActionAsync_TriggerAlert_SendsEventType()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("trigger-alert", """{"eventType":"follow"}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal("follow", _server.LastReceivedEventType);
+    }
+
+    [Fact]
     public async Task GetParameterOptionsAsync_UnrelatedAction_ReturnsEmpty()
     {
         await _credentials.SetAsync("access-token", _server.ExpectedToken);
