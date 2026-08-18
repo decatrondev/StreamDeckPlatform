@@ -225,6 +225,18 @@ public class DecatronPluginTests : IAsyncLifetime
         Assert.Empty(options);
     }
 
+    [Fact]
+    public async Task GetParameterOptionsAsync_TriggerAlert_ReturnsFixedEventTypes_NoTokenNeeded()
+    {
+        // Sin conectar Decatron a propósito — es una lista fija, no debería
+        // necesitar red ni token para devolverla.
+        var options = await _plugin.GetParameterOptionsAsync("trigger-alert", "eventType");
+
+        Assert.Equal(7, options.Count);
+        Assert.Contains(options, o => o.Value == "follow");
+        Assert.Contains(options, o => o.Value == "hypeTrain");
+    }
+
     private sealed class TestPluginContext(ICredentialStore credentials) : IPluginContext
     {
         public ICredentialStore Credentials { get; } = credentials;

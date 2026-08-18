@@ -63,8 +63,8 @@ public sealed class DecatronPlugin : IPlugin
             """{"fields":[{"key":"seconds","label":"Segundos","type":"number","required":true}]}"""),
         new("play-sound", "Reproducir Sound Alert", "Uno de los que ya configuraste en el dashboard.",
             """{"fields":[{"key":"soundId","label":"Sonido","type":"select","dynamic":true,"required":true}]}"""),
-        new("trigger-alert", "Disparar alerta", "eventType: follow, subs, bits, giftSubs, raids, resubs o hypeTrain (según lo que tengas configurado en Alertas de Eventos).",
-            """{"fields":[{"key":"eventType","label":"Tipo de evento","type":"text","required":true},{"key":"username","label":"Usuario (opcional)","type":"text","required":false},{"key":"message","label":"Mensaje (opcional)","type":"text","required":false},{"key":"amount","label":"Monto (opcional)","type":"number","required":false}]}""")
+        new("trigger-alert", "Disparar alerta", "Según lo que tengas configurado en Alertas de Eventos.",
+            """{"fields":[{"key":"eventType","label":"Tipo de evento","type":"select","dynamic":true,"required":true},{"key":"username","label":"Usuario (opcional)","type":"text","required":false},{"key":"message","label":"Mensaje (opcional)","type":"text","required":false},{"key":"amount","label":"Monto (opcional)","type":"number","required":false}]}""")
     ];
 
     // Nunca se dispara — este plugin no tiene estado de conexión ni eventos
@@ -172,11 +172,30 @@ public sealed class DecatronPlugin : IPlugin
         return ok ? PluginActionResult.Ok("Alerta disparada.") : PluginActionResult.Fail($"Decatron rechazó la alerta: {body}");
     }
 
+    // Los 7 tipos de evento que soporta Alertas de Eventos del dashboard —
+    // lista fija, no depende de la configuración de cada usuario (a
+    // diferencia de Sound Alerts, acá no hay nada que traer del bot).
+    private static readonly ParameterOption[] AlertEventTypes =
+    [
+        new("follow", "Nuevo seguidor"),
+        new("subs", "Suscripción"),
+        new("bits", "Bits"),
+        new("giftSubs", "Regalo de sub"),
+        new("raids", "Raid"),
+        new("resubs", "Resub"),
+        new("hypeTrain", "Hype Train")
+    ];
+
     // Lista fija (no búsqueda en vivo como categorías) — se trae una sola vez
-    // al abrir el diálogo, la cantidad de Sound Alerts configurados es chica.
+    // al abrir el diálogo.
     public async Task<IReadOnlyList<ParameterOption>> GetParameterOptionsAsync(
         string actionId, string parameterKey, CancellationToken ct = default)
     {
+        if ((actionId, parameterKey) == ("trigger-alert", "eventType"))
+        {
+            return AlertEventTypes;
+        }
+
         if ((actionId, parameterKey) != ("play-sound", "soundId"))
         {
             return [];
