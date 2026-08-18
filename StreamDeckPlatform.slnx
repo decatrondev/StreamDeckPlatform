@@ -26,6 +26,8 @@
     <Project Path="Device/Deck.Device/Deck.Device.csproj" />
   </Folder>
   <Folder Name="/Plugins/">
+    <Project Path="Plugins/Deck.Plugins.Decatron.Tests/Deck.Plugins.Decatron.Tests.csproj" />
+    <Project Path="Plugins/Deck.Plugins.Decatron/Deck.Plugins.Decatron.csproj" />
     <Project Path="Plugins/Deck.Plugins.Discord.Tests/Deck.Plugins.Discord.Tests.csproj" />
     <Project Path="Plugins/Deck.Plugins.Discord/Deck.Plugins.Discord.csproj" />
     <Project Path="Plugins/Deck.Plugins.Obs.Tests/Deck.Plugins.Obs.Tests.csproj" />

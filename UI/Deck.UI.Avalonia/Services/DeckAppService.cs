@@ -5,6 +5,7 @@ using Deck.Core.Icons;
 using Deck.Core.Model;
 using Deck.Core.Plugins;
 using Deck.Core.SystemActions;
+using Deck.Plugins.Decatron;
 using Deck.Plugins.Discord;
 using Deck.Plugins.Obs;
 using Deck.Plugins.Spotify;
@@ -78,6 +79,7 @@ public class DeckAppService
         var loadedPlugins = new[]
         {
             plugins.LoadInstance(new SystemActionsPlugin()),
+            plugins.LoadInstance(new DecatronPlugin()),
             plugins.LoadInstance(new ObsPlugin()),
             plugins.LoadInstance(new SpotifyPlugin(PluginClientIds.Spotify)),
             plugins.LoadInstance(new DiscordPlugin(PluginClientIds.Discord)),

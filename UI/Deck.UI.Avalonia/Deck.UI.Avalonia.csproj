@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Deck.Core\Deck.Core.csproj" />
+    <ProjectReference Include="..\..\Plugins\Deck.Plugins.Decatron\Deck.Plugins.Decatron.csproj" />
     <ProjectReference Include="..\..\Plugins\Deck.Plugins.Obs\Deck.Plugins.Obs.csproj" />
     <ProjectReference Include="..\..\Plugins\Deck.Plugins.Spotify\Deck.Plugins.Spotify.csproj" />
     <ProjectReference Include="..\..\Plugins\Deck.Plugins.Discord\Deck.Plugins.Discord.csproj" />
