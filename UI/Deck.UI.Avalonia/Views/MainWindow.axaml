@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Deck.UI.Avalonia.ViewModels"
+        xmlns:conv="using:Deck.UI.Avalonia.Converters"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="620"
@@ -151,9 +152,9 @@
                     <StackPanel Spacing="4">
                         <StackPanel Orientation="Horizontal" Spacing="16">
                             <RadioButton Content="Acción" GroupName="Mode"
-                                         IsChecked="{Binding Mode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:AssignMode.Action}}" />
+                                         IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:AssignMode.Action}}" />
                             <RadioButton Content="Carpeta" GroupName="Mode"
-                                         IsChecked="{Binding Mode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:AssignMode.Folder}}" />
+                                         IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:AssignMode.Folder}}" />
                         </StackPanel>
                         <TextBlock FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" TextWrapping="Wrap">
                             <Run Text="Acción: dispara algo al tocarla. Carpeta: no ejecuta nada, te lleva a otra página de teclas (para agrupar, ej. todas las escenas de OBS juntas)." />
