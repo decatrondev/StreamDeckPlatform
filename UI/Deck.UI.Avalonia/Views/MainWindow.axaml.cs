@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Deck.Core.Model;
 using Deck.UI.Avalonia.ViewModels;
 
@@ -37,5 +38,27 @@ public partial class MainWindow : Window
         {
             await vm.SelectProfileAsync(profile);
         }
+    }
+
+    // Elegir un archivo es una operación de plataforma (StorageProvider) —
+    // por eso vive acá y no en el ViewModel, que solo recibe el resultado.
+    private async void OnPickIconClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel { Dialog: { } dialog }) return;
+
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Elegir imagen para la tecla",
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("Imágenes") { Patterns = ["*.png", "*.jpg", "*.jpeg"] }]
+        });
+
+        if (files.Count == 0) return;
+
+        var extension = Path.GetExtension(files[0].Name);
+        if (string.IsNullOrEmpty(extension)) extension = ".png";
+
+        await using var stream = await files[0].OpenReadAsync();
+        await dialog.SetCustomIconAsync(stream, extension);
     }
 }

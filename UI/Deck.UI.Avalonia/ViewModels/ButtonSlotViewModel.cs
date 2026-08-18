@@ -1,5 +1,7 @@
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Deck.Core.Icons;
 using Deck.Core.Model;
 
 namespace Deck.UI.Avalonia.ViewModels;
@@ -9,6 +11,8 @@ namespace Deck.UI.Avalonia.ViewModels;
 // al asignarle una acción o carpeta (ver MainViewModel.OnDialogClosedAsync).
 public partial class ButtonSlotViewModel : ViewModelBase
 {
+    private readonly IconStore? _icons;
+
     public ButtonSlot? Slot { get; private set; }
     public int Row { get; }
     public int Column { get; }
@@ -25,7 +29,19 @@ public partial class ButtonSlotViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(StatusGlyph))]
     public partial bool IsRunning { get; set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasIcon))]
+    public partial Bitmap? IconBitmap { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasIcon))]
+    public partial string? IconEmoji { get; set; }
+
     public bool IsAssigned => Slot is not null;
+
+    // Con ícono, la tecla lo muestra a pantalla completa y el label de texto
+    // no se pinta — ver el template de la grilla en MainWindow.axaml.
+    public bool HasIcon => IconBitmap is not null || IconEmoji is not null;
 
     public string DisplayLabel => Label is { Length: > 0 } label ? label : "+";
 
@@ -39,10 +55,11 @@ public partial class ButtonSlotViewModel : ViewModelBase
     public event Func<ButtonSlotViewModel, Task>? EditRequested;
     public event Func<ButtonSlotViewModel, Task>? ClearRequested;
 
-    public ButtonSlotViewModel(int row, int column, ButtonSlot? slot)
+    public ButtonSlotViewModel(int row, int column, ButtonSlot? slot, IconStore? icons = null)
     {
         Row = row;
         Column = column;
+        _icons = icons;
         ActivateCommand = new AsyncRelayCommand(() => Activated?.Invoke(this) ?? Task.CompletedTask);
         EditCommand = new AsyncRelayCommand(() => EditRequested?.Invoke(this) ?? Task.CompletedTask, () => IsAssigned);
         ClearCommand = new AsyncRelayCommand(() => ClearRequested?.Invoke(this) ?? Task.CompletedTask, () => IsAssigned);
@@ -54,6 +71,16 @@ public partial class ButtonSlotViewModel : ViewModelBase
         Slot = slot;
         Label = slot?.Label;
         IsFolder = slot?.Type == ButtonSlotType.Folder;
+
+        IconEmoji = IconStore.ResolveEmoji(slot?.IconRef);
+        var filePath = _icons?.ResolveFilePath(slot?.IconRef);
+        IconBitmap = null;
+        if (filePath is not null && File.Exists(filePath))
+        {
+            try { IconBitmap = new Bitmap(filePath); }
+            catch { /* archivo corrupto o formato no soportado — se ve sin ícono, no rompe la grilla */ }
+        }
+
         OnPropertyChanged(nameof(IsAssigned));
         EditCommand.NotifyCanExecuteChanged();
         ClearCommand.NotifyCanExecuteChanged();

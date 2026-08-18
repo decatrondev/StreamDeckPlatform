@@ -1,6 +1,7 @@
 using Deck.Core.Credentials;
 using Deck.Core.Data;
 using Deck.Core.Execution;
+using Deck.Core.Icons;
 using Deck.Core.Model;
 using Deck.Core.Plugins;
 using Deck.Core.SystemActions;
@@ -24,13 +25,16 @@ public class DeckAppService
     public PluginManager Plugins { get; }
     public ActionExecutor Executor { get; }
     public ICredentialManager Credentials { get; }
+    public IconStore Icons { get; }
 
-    private DeckAppService(DeckDbContext db, PluginManager plugins, ActionExecutor executor, ICredentialManager credentials)
+    private DeckAppService(
+        DeckDbContext db, PluginManager plugins, ActionExecutor executor, ICredentialManager credentials, IconStore icons)
     {
         Db = db;
         Plugins = plugins;
         Executor = executor;
         Credentials = credentials;
+        Icons = icons;
     }
 
     public static async Task<DeckAppService> StartAsync()
@@ -43,6 +47,7 @@ public class DeckAppService
 
         var credentials = new SqliteCredentialManager(
             db, CredentialEncryptionKey.LoadOrCreate(Path.Combine(appDataDir, "credentials.key")));
+        var icons = new IconStore(appDataDir);
 
         // Sin esto no había forma de que el usuario final nos pase un error real —
         // solo veía "no conecta" sin ningún detalle. Un archivo por día, 14 días de
@@ -87,7 +92,7 @@ public class DeckAppService
 
         await SeedIfEmptyAsync(db);
 
-        return new DeckAppService(db, plugins, new ActionExecutor(plugins), credentials);
+        return new DeckAppService(db, plugins, new ActionExecutor(plugins), credentials, icons);
     }
 
     private static async Task SeedIfEmptyAsync(DeckDbContext db)

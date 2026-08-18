@@ -110,12 +110,26 @@
                                         <MenuItem Header="Quitar" Command="{Binding ClearCommand}" />
                                     </ContextMenu>
                                 </Button.ContextMenu>
-                                <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding StatusGlyph}" HorizontalAlignment="Center"
+                                <Grid>
+                                    <!-- Con ícono, ocupa toda la tecla y el label de texto no se
+                                         pinta (estilo Stream Deck real) — sin ícono, el layout de
+                                         siempre (glyph de estado + nombre). -->
+                                    <StackPanel Spacing="4" HorizontalAlignment="Center" IsVisible="{Binding !HasIcon}">
+                                        <TextBlock Text="{Binding StatusGlyph}" HorizontalAlignment="Center"
+                                                   Foreground="{StaticResource FlowdeckAccentLightBrush}" />
+                                        <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap"
+                                                   TextAlignment="Center" MaxWidth="90" />
+                                    </StackPanel>
+
+                                    <Image Source="{Binding IconBitmap}" IsVisible="{Binding IconBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                           Stretch="Uniform" Margin="10" />
+                                    <TextBlock Text="{Binding IconEmoji}" IsVisible="{Binding IconEmoji, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                               FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                                    <TextBlock Text="{Binding StatusGlyph}" IsVisible="{Binding HasIcon}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
                                                Foreground="{StaticResource FlowdeckAccentLightBrush}" />
-                                    <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap"
-                                               TextAlignment="Center" MaxWidth="90" />
-                                </StackPanel>
+                                </Grid>
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -162,6 +176,42 @@
                              Text="{Binding RawParametersJson}"
                              IsVisible="{Binding !IsSystemAction}" />
 
+                    <!-- Ícono opcional — con ícono, la tecla lo muestra a pantalla
+                         completa y no el nombre (ver DeckKey en la grilla). -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Ícono (opcional)" FontSize="11" Foreground="{StaticResource FlowdeckInkFaintBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Width="40" Height="40" CornerRadius="8"
+                                    Background="{StaticResource FlowdeckGraphiteBrush}"
+                                    BorderBrush="{StaticResource FlowdeckLineBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Image Source="{Binding IconPreviewBitmap}" IsVisible="{Binding IconPreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}" Stretch="Uniform" Margin="4" />
+                                    <TextBlock Text="{Binding IconPreviewEmoji}" IsVisible="{Binding IconPreviewEmoji, Converter={x:Static ObjectConverters.IsNotNull}}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <Button Content="Elegir imagen…" Classes="Secondary" Click="OnPickIconClick" />
+                            <Button Content="Quitar" Classes="Secondary" Command="{Binding ClearIconCommand}"
+                                    IsVisible="{Binding HasIcon}" />
+                        </StackPanel>
+                        <!-- Los 12 emoji fijos van a mano en vez de un ItemsControl —
+                             son pocos y constantes, evita el binding relativo al VM
+                             padre desde dentro de un DataTemplate. -->
+                        <WrapPanel>
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="🎤" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="🎤" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="📷" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="📷" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="⚙️" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="⚙️" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="💬" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="💬" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="▶️" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="▶️" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="⏹" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="⏹" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="📁" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="📁" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="🔗" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="🔗" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="🔊" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="🔊" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="💻" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="💻" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="🎵" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="🎵" />
+                            <Button Classes="Secondary" FontSize="16" Padding="8" Margin="0,0,4,4" Content="🔔" Command="{Binding SelectBuiltInIconCommand}" CommandParameter="🔔" />
+                        </WrapPanel>
+                    </StackPanel>
+
                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                         <Button Content="Cancelar" Classes="Secondary" Command="{Binding CancelCommand}" />
                         <Button Content="Guardar" Classes="Primary" Command="{Binding SaveCommand}" />
@@ -206,8 +256,8 @@
             <DockPanel Grid.Column="1" Margin="24">
 
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,18" VerticalAlignment="Center">
-                    <Button Content="← Volver a la grilla" Classes="Secondary" Padding="10,4"
-                            Command="{Binding CloseCommand}" />
+                    <Button Content="←" Classes="Secondary" Padding="10,4"
+                            Command="{Binding CloseCommand}" ToolTip.Tip="Volver a la grilla" />
                     <TextBlock Text="{Binding SelectedCategory.Name}" FontWeight="SemiBold" FontSize="15"
                                VerticalAlignment="Center" Foreground="{StaticResource FlowdeckInkBrush}" />
 

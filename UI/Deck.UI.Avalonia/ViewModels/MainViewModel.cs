@@ -125,13 +125,9 @@ public partial class MainViewModel : ViewModelBase
             for (var col = 0; col < page.Columns; col++)
             {
                 var slot = slots.FirstOrDefault(s => s.Row == row && s.Column == col);
-                var vm = new ButtonSlotViewModel(row, col, slot);
+                var vm = new ButtonSlotViewModel(row, col, slot, _app.Icons);
                 vm.Activated += OnButtonActivatedAsync;
-                vm.EditRequested += button =>
-                {
-                    OpenAssignDialog(button);
-                    return Task.CompletedTask;
-                };
+                vm.EditRequested += OpenAssignDialogAsync;
                 vm.ClearRequested += OnButtonClearRequestedAsync;
                 Buttons.Add(vm);
             }
@@ -159,7 +155,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (button.Slot is null)
         {
-            OpenAssignDialog(button);
+            await OpenAssignDialogAsync(button);
             return;
         }
 
@@ -184,18 +180,56 @@ public partial class MainViewModel : ViewModelBase
             : $"✗ {button.Label}: {result.StepResults[result.FailedAtStep!.Value].Message}";
     }
 
-    private void OpenAssignDialog(ButtonSlotViewModel button)
+    private async Task OpenAssignDialogAsync(ButtonSlotViewModel button)
     {
         var pluginActions = _app.Plugins.Plugins
             .Where(p => p.Metadata.Id != SystemActionsPlugin.PluginId)
             .SelectMany(p => p.Instance.Actions.Select(a => (p.Metadata.Id, p.Metadata.Name, a)))
             .ToList();
 
-        var dialog = new AssignActionDialogViewModel(pluginActions);
+        var existing = button.Slot is null ? null : await LoadExistingAssignmentAsync(button.Slot);
+
+        var dialog = new AssignActionDialogViewModel(pluginActions, _app.Icons, existing);
         dialog.Closed += async result => await OnDialogClosedAsync(button, result);
 
         Dialog = dialog;
         IsDialogOpen = true;
+    }
+
+    // Sin esto, click derecho → Editar abría el diálogo siempre vacío aunque
+    // la tecla ya tuviera algo asignado — bug real, no solo falta de UX.
+    private async Task<ExistingAssignment> LoadExistingAssignmentAsync(ButtonSlot slot)
+    {
+        if (slot.Type == ButtonSlotType.Folder)
+        {
+            return new ExistingAssignment(AssignMode.Folder, null, null, slot.Label ?? "", null, null, null, slot.IconRef);
+        }
+
+        var step = await _app.Db.ActionSteps
+            .Where(a => a.ButtonSlotId == slot.Id)
+            .OrderBy(a => a.Order)
+            .FirstOrDefaultAsync();
+
+        if (step is null)
+        {
+            return new ExistingAssignment(AssignMode.Action, null, null, slot.Label ?? "", null, null, null, slot.IconRef);
+        }
+
+        var isSystemAction = step.PluginId == SystemActionsPlugin.PluginId;
+        if (!isSystemAction)
+        {
+            return new ExistingAssignment(
+                AssignMode.Action, step.PluginId, step.ActionId, slot.Label ?? "", null, null, step.ParametersJson, slot.IconRef);
+        }
+
+        var parameters = JsonDocument.Parse(step.ParametersJson).RootElement;
+        var pathOrUrl = step.ActionId == "open-url"
+            ? parameters.GetProperty("url").GetString()
+            : parameters.TryGetProperty("path", out var p) ? p.GetString() : null;
+        var args = parameters.TryGetProperty("args", out var a) ? a.GetString() : null;
+
+        return new ExistingAssignment(
+            AssignMode.Action, step.PluginId, step.ActionId, slot.Label ?? "", pathOrUrl, args, null, slot.IconRef);
     }
 
     private async Task OnDialogClosedAsync(ButtonSlotViewModel button, AssignActionResult? result)
@@ -228,7 +262,8 @@ public partial class MainViewModel : ViewModelBase
                 Column = button.Column,
                 Type = ButtonSlotType.Folder,
                 TargetPageId = newPage.Id,
-                Label = result.Label
+                Label = result.Label,
+                IconRef = result.IconRef
             };
 
             _app.Db.Pages.Add(newPage);
@@ -246,7 +281,8 @@ public partial class MainViewModel : ViewModelBase
                 Row = button.Row,
                 Column = button.Column,
                 Type = ButtonSlotType.Action,
-                Label = result.Label
+                Label = result.Label,
+                IconRef = result.IconRef
             };
 
             var isSystemAction = result.PluginId == SystemActionsPlugin.PluginId;
