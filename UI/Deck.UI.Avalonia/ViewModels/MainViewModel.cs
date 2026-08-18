@@ -31,13 +31,13 @@ public partial class MainViewModel : ViewModelBase
     public partial bool IsDialogOpen { get; set; }
 
     [ObservableProperty]
-    public partial bool IsSettingsDialogOpen { get; set; }
+    public partial bool IsSettingsPageOpen { get; set; }
 
     [ObservableProperty]
     public partial AssignActionDialogViewModel? Dialog { get; set; }
 
     [ObservableProperty]
-    public partial SettingsDialogViewModel? Settings { get; set; }
+    public partial SettingsPageViewModel? Settings { get; set; }
 
     public bool CanNavigateBack => _breadcrumb.Count > 1;
 
@@ -57,15 +57,15 @@ public partial class MainViewModel : ViewModelBase
 
     private void OpenSettings()
     {
-        var settings = new SettingsDialogViewModel(_app);
+        var settings = new SettingsPageViewModel(_app);
         settings.Closed += () =>
         {
-            IsSettingsDialogOpen = false;
+            IsSettingsPageOpen = false;
             Settings = null;
         };
 
         Settings = settings;
-        IsSettingsDialogOpen = true;
+        IsSettingsPageOpen = true;
     }
 
     public async Task InitializeAsync()

@@ -58,6 +58,14 @@
     <Setter Property="BorderBrush" Value="{StaticResource FlowdeckAccent}" />
   </Style>
 
+  <!-- Punto de estado del sidebar de categorías en Ajustes (●/○). -->
+  <Style Selector="Ellipse.StatusDot">
+    <Setter Property="Fill" Value="{StaticResource FlowdeckInkFaintBrush}" />
+  </Style>
+  <Style Selector="Ellipse.StatusDot.Connected">
+    <Setter Property="Fill" Value="{StaticResource FlowdeckAccentBrush}" />
+  </Style>
+
   <!-- Campos del diálogo de asignación. -->
   <Style Selector="TextBox.FlowdeckField, ComboBox.FlowdeckField">
     <Setter Property="Background" Value="{StaticResource FlowdeckGraphiteBrush}" />
