@@ -1,12 +1,13 @@
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 
 namespace Deck.Plugins.Decatron.Tests.Fakes;
 
-// Simula el único endpoint que este plugin llama (POST /api/v1/chat/send de
-// twitch.decatron.net) — no hace falta levantar el bot real para probar el
-// plugin.
+// Simula los endpoints que este plugin llama en twitch.decatron.net
+// (chat/send, twitch/category, twitch/title, twitch/games/search) — no hace
+// falta levantar el bot real para probar el plugin.
 public sealed class FakeDecatronApiServer : IAsyncDisposable
 {
     private readonly HttpListener _listener = new();
@@ -14,11 +15,14 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
     private Task? _acceptLoop;
 
     public int Port { get; }
-    public string ChatSendUrl => $"http://127.0.0.1:{Port}/api/v1/chat/send";
+    public string BaseUrl => $"http://127.0.0.1:{Port}/api/v1";
 
     public string ExpectedToken { get; set; } = "test-access-token";
     public bool RejectRequest { get; set; }
     public string? LastReceivedMessage { get; private set; }
+    public string? LastReceivedGameId { get; private set; }
+    public string? LastReceivedTitle { get; private set; }
+    public List<(string Id, string Name)> GameSearchResults { get; set; } = [];
 
     public FakeDecatronApiServer()
     {
@@ -53,26 +57,68 @@ public sealed class FakeDecatronApiServer : IAsyncDisposable
             var authHeader = context.Request.Headers["Authorization"];
             if (RejectRequest || authHeader != $"Bearer {ExpectedToken}")
             {
-                context.Response.StatusCode = authHeader != $"Bearer {ExpectedToken}" ? 401 : 400;
-                context.Response.Close();
+                WriteJson(context, authHeader != $"Bearer {ExpectedToken}" ? 401 : 400, new { error = "unauthorized" });
                 return;
             }
 
-            var body = await new StreamReader(context.Request.InputStream).ReadToEndAsync();
-            using var doc = JsonDocument.Parse(body);
-            LastReceivedMessage = doc.RootElement.GetProperty("message").GetString();
+            var path = context.Request.Url!.AbsolutePath;
 
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(new { success = true, message = "Message sent" });
-            context.Response.StatusCode = 200;
-            context.Response.ContentType = "application/json";
-            context.Response.ContentLength64 = bytes.Length;
-            context.Response.OutputStream.Write(bytes, 0, bytes.Length);
-            context.Response.Close();
+            if (path == "/api/v1/chat/send")
+            {
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedMessage = doc.RootElement.GetProperty("message").GetString();
+                WriteJson(context, 200, new { success = true, message = "Message sent" });
+                return;
+            }
+
+            if (path == "/api/v1/twitch/category")
+            {
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedGameId = doc.RootElement.GetProperty("gameId").GetString();
+                WriteJson(context, 200, new { success = true, message = "Category updated", category = "Just Chatting" });
+                return;
+            }
+
+            if (path == "/api/v1/twitch/title")
+            {
+                var doc = await ReadJsonBodyAsync(context);
+                LastReceivedTitle = doc.RootElement.GetProperty("title").GetString();
+                WriteJson(context, 200, new { success = true, message = "Title updated" });
+                return;
+            }
+
+            if (path == "/api/v1/twitch/games/search")
+            {
+                WriteJson(context, 200, new
+                {
+                    success = true,
+                    games = GameSearchResults.Select(g => new { id = g.Id, name = g.Name, box_art_url = (string?)null })
+                });
+                return;
+            }
+
+            WriteJson(context, 404, new { error = "not_found" });
         }
         catch
         {
             try { context.Response.Abort(); } catch { /* ya se habrá cerrado */ }
         }
+    }
+
+    private static async Task<JsonDocument> ReadJsonBodyAsync(HttpListenerContext context)
+    {
+        var body = await new StreamReader(context.Request.InputStream).ReadToEndAsync();
+        return JsonDocument.Parse(body);
+    }
+
+    private static void WriteJson(HttpListenerContext context, int statusCode, object body)
+    {
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(body);
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+        context.Response.ContentLength64 = bytes.Length;
+        context.Response.OutputStream.Write(bytes, 0, bytes.Length);
+        context.Response.Close();
     }
 
     private static int GetFreeTcpPort()

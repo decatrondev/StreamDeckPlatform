@@ -16,7 +16,7 @@ public class DecatronPluginTests : IAsyncLifetime
         _server = new FakeDecatronApiServer();
         await _server.StartAsync();
 
-        _plugin = new DecatronPlugin(new HttpClient(), _server.ChatSendUrl);
+        _plugin = new DecatronPlugin(new HttpClient(), _server.BaseUrl);
         _credentials = new InMemoryCredentialStore();
         await _plugin.InitializeAsync(new TestPluginContext(_credentials));
     }
@@ -62,9 +62,51 @@ public class DecatronPluginTests : IAsyncLifetime
     {
         await _credentials.SetAsync("access-token", _server.ExpectedToken);
 
-        var result = await _plugin.ExecuteActionAsync("set-title", "{}");
+        var result = await _plugin.ExecuteActionAsync("nonexistent-action", "{}");
 
         Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task ExecuteActionAsync_SetTitle_UsesStoredDecatronToken()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("set-title", """{"title":"probando desde flowdeck"}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal("probando desde flowdeck", _server.LastReceivedTitle);
+    }
+
+    [Fact]
+    public async Task ExecuteActionAsync_SetCategory_SendsChosenGameId()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+
+        var result = await _plugin.ExecuteActionAsync("set-category", """{"gameId":"509658"}""");
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal("509658", _server.LastReceivedGameId);
+    }
+
+    [Fact]
+    public async Task SearchParameterOptionsAsync_SetCategory_ReturnsMatchingGames()
+    {
+        await _credentials.SetAsync("access-token", _server.ExpectedToken);
+        _server.GameSearchResults = [("509658", "Just Chatting"), ("21779", "League of Legends")];
+
+        var options = await _plugin.SearchParameterOptionsAsync("set-category", "gameId", "l");
+
+        Assert.Equal(2, options.Count);
+        Assert.Contains(options, o => o.Value == "509658" && o.Label == "Just Chatting");
+    }
+
+    [Fact]
+    public async Task SearchParameterOptionsAsync_WithoutDecatronConnected_ReturnsEmpty()
+    {
+        var options = await _plugin.SearchParameterOptionsAsync("set-category", "gameId", "l");
+
+        Assert.Empty(options);
     }
 
     private sealed class TestPluginContext(ICredentialStore credentials) : IPluginContext
