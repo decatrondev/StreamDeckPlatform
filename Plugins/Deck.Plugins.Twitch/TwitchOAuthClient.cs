@@ -4,17 +4,29 @@ using System.Text.Json;
 
 namespace Deck.Plugins.Twitch;
 
-// Authorization Code + PKCE, mismo patrón que Spotify (Fase 4) — Twitch
-// también lo soporta para apps públicas, sin client secret embebido.
+// Authorization Code + PKCE contra id.twitch.tv para la parte de "autorizar"
+// (BuildAuthorizationUrl) — pero el paso de canjear code/refresh_token por
+// un access_token NO se hace directo contra Twitch: la app de Twitch que
+// usa este client_id ya tiene un client_secret generado (la usa también el
+// bot), y una vez que una app de Twitch tiene secret, Twitch lo exige en
+// /oauth2/token pase lo que pase con PKCE ("missing client secret", probado
+// en producción). Ese secret no puede vivir en Flowdeck (repo público), así
+// que ese paso se proxea por el backend de Decatron (que sí lo guarda de
+// forma segura, server-side) — mismo patrón que ya usa DecatronAuthService.
 public class TwitchOAuthClient
 {
     private readonly HttpClient _http;
     private readonly string _authBaseUrl;
+    private readonly string _tokenProxyUrl;
 
-    public TwitchOAuthClient(HttpClient http, string authBaseUrl = "https://id.twitch.tv")
+    public TwitchOAuthClient(
+        HttpClient http,
+        string authBaseUrl = "https://id.twitch.tv",
+        string tokenProxyUrl = "https://twitch.decatron.net/api/oauth/twitch/token")
     {
         _http = http;
         _authBaseUrl = authBaseUrl.TrimEnd('/');
+        _tokenProxyUrl = tokenProxyUrl;
     }
 
     public static string GenerateCodeVerifier() =>
@@ -71,7 +83,7 @@ public class TwitchOAuthClient
     private async Task<TwitchTokens> PostTokenRequestAsync(
         Dictionary<string, string> form, string? existingRefreshToken, CancellationToken ct)
     {
-        using var response = await _http.PostAsync($"{_authBaseUrl}/oauth2/token", new FormUrlEncodedContent(form), ct);
+        using var response = await _http.PostAsync(_tokenProxyUrl, new FormUrlEncodedContent(form), ct);
         var body = await response.Content.ReadAsStringAsync(ct);
 
         if (!response.IsSuccessStatusCode)

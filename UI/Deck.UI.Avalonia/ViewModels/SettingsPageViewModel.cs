@@ -76,8 +76,18 @@ public partial class SettingsPageViewModel : ViewModelBase
     [ObservableProperty]
     public partial string DecatronStatus { get; set; } = "sin conectar";
 
+    // Decatron y el login directo de Twitch pisan las mismas acciones
+    // (categoría/título/chat) — tenerlos los dos conectados a la vez
+    // confundía sobre cuál de los dos estaba respondiendo. Ahora son
+    // mutuamente excluyentes: conectar uno deshabilita el botón del otro
+    // (ver los CanExecute de ConnectDecatronCommand/ConnectTwitchCommand).
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConnectTwitchCommand))]
     public partial bool IsDecatronConnected { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConnectDecatronCommand))]
+    public partial bool IsTwitchConnected { get; set; }
 
     [ObservableProperty]
     public partial string ObsStatus { get; set; } = "";
@@ -98,6 +108,7 @@ public partial class SettingsPageViewModel : ViewModelBase
     public IAsyncRelayCommand ConnectDecatronCommand { get; }
     public IAsyncRelayCommand DisconnectDecatronCommand { get; }
     public IAsyncRelayCommand ConnectTwitchCommand { get; }
+    public IAsyncRelayCommand DisconnectTwitchCommand { get; }
     public IAsyncRelayCommand ConnectSpotifyCommand { get; }
     public IRelayCommand CloseCommand { get; }
 
@@ -111,9 +122,10 @@ public partial class SettingsPageViewModel : ViewModelBase
         _decatronAuth = app is null ? null : new DecatronAuthService(app.Credentials, PluginClientIds.Decatron);
         SelectedCategory = Categories[0];
         SaveObsCommand = new AsyncRelayCommand(SaveObsAsync);
-        ConnectDecatronCommand = new AsyncRelayCommand(ConnectDecatronAsync);
+        ConnectDecatronCommand = new AsyncRelayCommand(ConnectDecatronAsync, () => !IsTwitchConnected);
         DisconnectDecatronCommand = new AsyncRelayCommand(DisconnectDecatronAsync);
-        ConnectTwitchCommand = new AsyncRelayCommand(ConnectTwitchAsync);
+        ConnectTwitchCommand = new AsyncRelayCommand(ConnectTwitchAsync, () => !IsDecatronConnected);
+        DisconnectTwitchCommand = new AsyncRelayCommand(DisconnectTwitchAsync);
         ConnectSpotifyCommand = new AsyncRelayCommand(ConnectSpotifyAsync);
         CloseCommand = new RelayCommand(() => Closed?.Invoke());
         RefreshStatuses();
@@ -144,6 +156,7 @@ public partial class SettingsPageViewModel : ViewModelBase
         Category("discord").IsConnected = DiscordStatus == "conectado";
         Category("twitch").IsConnected = TwitchStatus == "conectado";
         Category("spotify").IsConnected = SpotifyStatus == "conectado";
+        IsTwitchConnected = TwitchStatus == "conectado";
     }
 
     private static string Describe(string? state) => state switch
@@ -254,6 +267,16 @@ public partial class SettingsPageViewModel : ViewModelBase
         {
             RefreshStatuses();
         }
+    }
+
+    private async Task DisconnectTwitchAsync()
+    {
+        var plugin = GetInstance<TwitchPlugin>(TwitchPlugin.PluginId);
+        if (plugin is null) return;
+
+        await plugin.LogoutAsync();
+        RefreshStatuses();
+        FeedbackMessage = "Cuenta de Twitch desconectada.";
     }
 
     private async Task ConnectSpotifyAsync()

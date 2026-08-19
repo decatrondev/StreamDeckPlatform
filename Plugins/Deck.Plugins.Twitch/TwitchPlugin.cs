@@ -49,11 +49,12 @@ public sealed class TwitchPlugin : IPlugin
         HttpClient? httpClient = null,
         string authBaseUrl = "https://id.twitch.tv",
         string apiBaseUrl = "https://api.twitch.tv",
-        Uri? eventSubUri = null)
+        Uri? eventSubUri = null,
+        string tokenProxyUrl = "https://twitch.decatron.net/api/oauth/twitch/token")
     {
         _clientId = clientId;
         var http = httpClient ?? new HttpClient();
-        _oauth = new TwitchOAuthClient(http, authBaseUrl);
+        _oauth = new TwitchOAuthClient(http, authBaseUrl, tokenProxyUrl);
         _api = new TwitchApiClient(http, clientId, apiBaseUrl);
         _eventSub = new TwitchEventSubClient(eventSubUri);
         _eventSub.StateChanged += OnConnectionStateChanged;
@@ -128,6 +129,22 @@ public sealed class TwitchPlugin : IPlugin
     }
 
     public Task DisconnectAsync(CancellationToken ct = default) => _eventSub.StopAsync();
+
+    // No existía forma de "olvidar" la cuenta conectada (DisconnectAsync solo
+    // corta el WebSocket de EventSub, no borra el refresh-token) — hacía
+    // falta para poder desconectar Twitch desde Ajustes, sobre todo ahora que
+    // es mutuamente excluyente con Decatron.
+    public async Task LogoutAsync(CancellationToken ct = default)
+    {
+        await _eventSub.StopAsync();
+        _tokens = null;
+        _broadcasterId = null;
+
+        if (_context is not null)
+        {
+            await _context.Credentials.DeleteAsync("refresh-token", ct);
+        }
+    }
 
     public async Task<PluginActionResult> ExecuteActionAsync(string actionId, string parametersJson, CancellationToken ct = default)
     {

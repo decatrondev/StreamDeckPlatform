@@ -400,12 +400,17 @@
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=decatron}">
+                        <TextBlock Text="Bot compartido de Decatron: responde categoría/título/chat con el nombre &quot;Decatron&quot;, y suma Timer, Sound Alerts y Alertas de Eventos (exclusivo de acá, Twitch directo no los tiene)."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
                         <TextBlock Text="Iniciá sesión con tu cuenta de Decatron (usa tu Twitch) para identificarte en Flowdeck. Se abre el navegador."
                                    TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420"
                                    IsVisible="{Binding !IsDecatronConnected}" />
                         <TextBlock Text="Tu cuenta de Flowdeck está vinculada a Decatron con tu Twitch. Si el acceso vence (dura una hora), se te va a pedir reautorizar con un click."
                                    TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420"
                                    IsVisible="{Binding IsDecatronConnected}" />
+                        <TextBlock Text="Ya tenés Twitch conectado directo — desconectalo primero si querés usar el bot de Decatron en su lugar."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckSignalBrush}" MaxWidth="420"
+                                   IsVisible="{Binding IsTwitchConnected}" />
                         <Button Content="Conectar con Decatron" Classes="Primary" Command="{Binding ConnectDecatronCommand}"
                                 IsVisible="{Binding !IsDecatronConnected}" HorizontalAlignment="Left" Margin="0,4,0,0" />
                         <Button Content="Desconectar" Classes="Secondary" Command="{Binding DisconnectDecatronCommand}"
@@ -434,10 +439,15 @@
 
                     <StackPanel Spacing="6"
                                 IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=twitch}">
-                        <TextBlock Text="Es un login aparte del de Decatron — Decatron solo identifica tu cuenta, esto autoriza a Flowdeck a cambiar título/categoría y mandar mensajes al chat en tu nombre."
-                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkMutedBrush}" MaxWidth="420" />
+                        <TextBlock Text="Login directo con tu cuenta de Twitch, sin bot de por medio: categoría/título/chat salen con el nombre de la cuenta que conectes acá (usá una cuenta secundaria con moderador si querés que el chat hable con otro nombre). No incluye Timer, Sound Alerts ni Alertas de Eventos — eso es exclusivo de Decatron."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckInkFaintBrush}" MaxWidth="420" />
+                        <TextBlock Text="Ya tenés el bot de Decatron conectado — desconectalo primero si querés usar tu propia cuenta de Twitch en su lugar."
+                                   TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource FlowdeckSignalBrush}" MaxWidth="420"
+                                   IsVisible="{Binding IsDecatronConnected}" />
                         <Button Content="Conectar con Twitch" Classes="Primary" Command="{Binding ConnectTwitchCommand}"
-                                HorizontalAlignment="Left" Margin="0,4,0,0" />
+                                IsVisible="{Binding !IsTwitchConnected}" HorizontalAlignment="Left" Margin="0,4,0,0" />
+                        <Button Content="Desconectar" Classes="Secondary" Command="{Binding DisconnectTwitchCommand}"
+                                IsVisible="{Binding IsTwitchConnected}" HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>
 
                     <StackPanel Spacing="6"

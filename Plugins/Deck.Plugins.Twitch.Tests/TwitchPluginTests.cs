@@ -26,7 +26,11 @@ public class TwitchPluginTests : IAsyncLifetime
         _plugin = new TwitchPlugin(
             _apiServer.ExpectedClientId, new HttpClient(),
             _apiServer.BaseUrl.ToString(), _apiServer.BaseUrl.ToString(),
-            _eventSubServer.Uri);
+            _eventSubServer.Uri,
+            // El canje de token ya no va directo a authBaseUrl (ver comentario
+            // en TwitchOAuthClient) — en test apunta al mismo fake server,
+            // que sirve /oauth2/token sin exigir secret.
+            $"{_apiServer.BaseUrl}oauth2/token");
 
         await _plugin.InitializeAsync(new TestPluginContext(_credentials));
     }
