@@ -37,7 +37,10 @@ public partial class SettingsPageViewModel : ViewModelBase
     // (51823) para no chocar. Tienen que estar registrados EXACTOS (con la
     // barra final) como redirect URI en el dashboard de cada plataforma;
     // hasta ahora esos dashboards solo tenían el de twitch.decatron.net.
-    private const string TwitchRedirectUri = "http://127.0.0.1:51824/callback/";
+    // Twitch exige HTTPS en el redirect URI salvo la excepción explícita de
+    // "localhost" (no vale la IP 127.0.0.1 — la rechaza con "Es necesario el
+    // protocolo HTTPS"), por eso este usa localhost y no 127.0.0.1.
+    private const string TwitchRedirectUri = "http://localhost:51824/callback/";
     private const string SpotifyRedirectUri = "http://127.0.0.1:51825/callback/";
 
     private readonly DeckAppService _app;
