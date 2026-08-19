@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Contracts\Deck.SDK\Deck.SDK.csproj" />
+    <ProjectReference Include="..\..\Core\Deck.Core\Deck.Core.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

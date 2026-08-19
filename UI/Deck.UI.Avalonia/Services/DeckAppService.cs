@@ -1,3 +1,4 @@
+using Deck.Core.Auth;
 using Deck.Core.Credentials;
 using Deck.Core.Data;
 using Deck.Core.Execution;
@@ -76,7 +77,8 @@ public class DeckAppService
         // listener local de OAuth y se registre su redirect URI en cada
         // dashboard — cargarlos ya mismo no rompe nada, cada uno maneja "sin
         // conectar todavía" sin tirar excepción (ver Fases 3-6).
-        var decatron = new DecatronPlugin();
+        var decatronAuth = new DecatronAuthService(credentials, PluginClientIds.Decatron);
+        var decatron = new DecatronPlugin(decatronAuth, new HttpClient());
         var loadedPlugins = new[]
         {
             plugins.LoadInstance(new SystemActionsPlugin()),

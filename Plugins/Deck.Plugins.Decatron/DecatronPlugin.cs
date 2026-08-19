@@ -2,6 +2,7 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Deck.Core.Auth;
 using Deck.SDK;
 using Deck.SDK.Plugins;
 
@@ -25,6 +26,7 @@ public sealed class DecatronPlugin : IPlugin
 
     private readonly HttpClient _http;
     private readonly string _apiBaseUrl;
+    private readonly DecatronAuthService? _auth;
 
     private IPluginContext? _context;
 
@@ -32,9 +34,20 @@ public sealed class DecatronPlugin : IPlugin
     {
     }
 
-    // Para tests: apuntar al servidor falso en vez de la API real.
-    public DecatronPlugin(HttpClient http, string apiBaseUrl = DefaultApiBaseUrl)
+    // Para tests: apuntar al servidor falso en vez de la API real (sin
+    // DecatronAuthService — no hay refresh de por medio en esos casos).
+    public DecatronPlugin(HttpClient http, string apiBaseUrl = DefaultApiBaseUrl) : this(null, http, apiBaseUrl)
     {
+    }
+
+    // `auth` es el mismo DecatronAuthService que usa Ajustes para "Conectar
+    // con Decatron" — sin esto, cada acción leía el access-token guardado
+    // tal cual, sin chequear si ya venció. Si la app arrancaba con un token
+    // vencido (ej. PC reiniciada hace horas) y se apretaba una tecla antes
+    // de abrir Ajustes, la acción fallaba directo en vez de refrescar sola.
+    public DecatronPlugin(DecatronAuthService? auth, HttpClient http, string apiBaseUrl = DefaultApiBaseUrl)
+    {
+        _auth = auth;
         _http = http;
         _apiBaseUrl = apiBaseUrl.TrimEnd('/');
     }
@@ -297,8 +310,18 @@ public sealed class DecatronPlugin : IPlugin
         }
     }
 
-    private async Task<string?> GetTokenAsync(CancellationToken ct) =>
-        _context is null ? null : await _context.Credentials.GetAsync("access-token", ct);
+    private async Task<string?> GetTokenAsync(CancellationToken ct)
+    {
+        if (_context is null) return null;
+
+        // GetStatusAsync refresca sola si el access-token ya venció (mismo
+        // storage que usa Ajustes, por eso alcanza con pedirle el estado y
+        // releer después) — así una acción disparada con la app recién
+        // abierta no se rechaza por un token viejo, se renueva antes.
+        if (_auth is not null) await _auth.GetStatusAsync(ct);
+
+        return await _context.Credentials.GetAsync("access-token", ct);
+    }
 
     private async Task<(bool Ok, string Body)> PostAsync(string token, string path, object body, CancellationToken ct)
     {
