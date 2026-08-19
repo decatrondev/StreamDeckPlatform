@@ -7,6 +7,7 @@ using Deck.Plugins.Obs;
 using Deck.Plugins.Spotify;
 using Deck.Plugins.Twitch;
 using Deck.UI.Avalonia.Services;
+using Serilog;
 
 namespace Deck.UI.Avalonia.ViewModels;
 
@@ -210,6 +211,7 @@ public partial class SettingsPageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "Fallo al conectar con Decatron");
             FeedbackMessage = $"No se pudo conectar con Decatron: {ex.Message}";
         }
     }
@@ -245,6 +247,7 @@ public partial class SettingsPageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "Fallo al conectar con Twitch");
             FeedbackMessage = $"No se pudo conectar con Twitch: {ex.Message}";
         }
         finally
@@ -268,6 +271,7 @@ public partial class SettingsPageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "Fallo al conectar con Spotify");
             FeedbackMessage = $"No se pudo conectar con Spotify: {ex.Message}";
         }
         finally
