@@ -46,7 +46,15 @@ public class TwitchOAuthClient
             ["redirect_uri"] = redirectUri,
             ["code_challenge_method"] = "S256",
             ["code_challenge"] = challenge,
-            ["scope"] = scopes
+            ["scope"] = scopes,
+            // Sin esto, si el navegador ya tenía sesión de Twitch guardada
+            // (aunque no se "vea" logueado en otra pestaña — id.twitch.tv es
+            // un dominio de sesión aparte del sitio normal) Twitch saltea la
+            // pantalla de autorización entera y redirige solo, sin dar
+            // oportunidad de elegir otra cuenta. force_verify obliga a
+            // mostrar esa pantalla siempre, con el link "¿no sos vos?" para
+            // cambiar de cuenta.
+            ["force_verify"] = "true"
         };
 
         var qs = string.Join("&", query.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
