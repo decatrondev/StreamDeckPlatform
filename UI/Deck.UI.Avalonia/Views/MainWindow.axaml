@@ -359,35 +359,39 @@
 
             <DockPanel Grid.Column="1" Margin="24">
 
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,18" VerticalAlignment="Center">
-                    <Button Content="←" Classes="Secondary" Padding="10,4"
+                <!-- Grid en vez de StackPanel horizontal: la píldora vive en su propia
+                     columna a la derecha (con ancho máximo + recorte, ver Controls.axaml)
+                     para que un "conectado como {DisplayName}" largo no empuje el título
+                     ni el botón de volver. -->
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,18" VerticalAlignment="Center">
+                    <Button Grid.Column="0" Content="←" Classes="Secondary" Padding="10,4"
                             Command="{Binding CloseCommand}" ToolTip.Tip="Volver a la grilla" />
-                    <TextBlock Text="{Binding SelectedCategory.Name}" FontWeight="SemiBold" FontSize="15"
-                               VerticalAlignment="Center" Foreground="{StaticResource FlowdeckInkBrush}" />
+                    <TextBlock Grid.Column="1" Text="{Binding SelectedCategory.Name}" FontWeight="SemiBold" FontSize="15"
+                               VerticalAlignment="Center" Margin="12,0,12,0" Foreground="{StaticResource FlowdeckInkBrush}" />
 
                     <!-- Un solo pill de estado — SelectedCategory.IsConnected siempre
                          corresponde a la categoría visible, así que sirve para las 5. -->
-                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                    <Border Grid.Column="2" Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
                             IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=decatron}">
                         <TextBlock Classes="StatusPillText" Text="{Binding DecatronStatus}" />
                     </Border>
-                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                    <Border Grid.Column="2" Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
                             IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=obs}">
                         <TextBlock Classes="StatusPillText" Text="{Binding ObsStatus}" />
                     </Border>
-                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                    <Border Grid.Column="2" Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
                             IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=twitch}">
                         <TextBlock Classes="StatusPillText" Text="{Binding TwitchStatus}" />
                     </Border>
-                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                    <Border Grid.Column="2" Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
                             IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=spotify}">
                         <TextBlock Classes="StatusPillText" Text="{Binding SpotifyStatus}" />
                     </Border>
-                    <Border Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
+                    <Border Grid.Column="2" Classes="StatusPill" Classes.Connected="{Binding SelectedCategory.IsConnected}"
                             IsVisible="{Binding SelectedCategory.Id, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=discord}">
                         <TextBlock Classes="StatusPillText" Text="{Binding DiscordStatus}" />
                     </Border>
-                </StackPanel>
+                </Grid>
 
                 <TextBlock DockPanel.Dock="Bottom" Text="{Binding FeedbackMessage}" FontSize="12"
                            Foreground="{StaticResource FlowdeckSignalBrush}" Margin="0,18,0,0" />

@@ -85,6 +85,10 @@
     <Setter Property="Background" Value="{StaticResource FlowdeckSurfaceRaisedBrush}" />
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Padding" Value="10,3" />
+    <!-- Sin esto, "conectado como {DisplayName}" (largo variable) empujaba
+         el resto de la fila del header en vez de recortarse. -->
+    <Setter Property="MaxWidth" Value="200" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
   </Style>
   <Style Selector="Border.StatusPill.Connected">
     <Setter Property="Background" Value="#262563EB" />
@@ -93,6 +97,8 @@
     <Setter Property="FontSize" Value="11" />
     <Setter Property="FontWeight" Value="Medium" />
     <Setter Property="Foreground" Value="{StaticResource FlowdeckInkMutedBrush}" />
+    <Setter Property="TextWrapping" Value="NoWrap" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>
   <Style Selector="Border.StatusPill.Connected TextBlock.StatusPillText">
     <Setter Property="Foreground" Value="{StaticResource FlowdeckAccentLightBrush}" />
