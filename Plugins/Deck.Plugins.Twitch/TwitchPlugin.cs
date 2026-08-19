@@ -13,8 +13,12 @@ public sealed class TwitchPlugin : IPlugin
 {
     public const string PluginId = "twitch";
 
+    // "channel:manage:moderation" no existe como scope de Twitch (typo) y
+    // además no lo usa ninguna acción de este plugin (no hay ban/timeout) —
+    // Twitch rechazaba el login entero con "invalid scope requested" antes
+    // de sacarlo.
     private const string DefaultScopes =
-        "channel:manage:broadcast channel:manage:moderation user:write:chat moderator:read:followers channel:read:subscriptions";
+        "channel:manage:broadcast user:write:chat moderator:read:followers channel:read:subscriptions";
 
     private static readonly (string Type, string Version)[] EventSubscriptions =
     [
