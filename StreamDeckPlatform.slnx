@@ -23,6 +23,7 @@
     <Project Path="Core/Deck.Core/Deck.Core.csproj" />
   </Folder>
   <Folder Name="/Device/">
+    <Project Path="Device/Deck.Device.Tests/Deck.Device.Tests.csproj" />
     <Project Path="Device/Deck.Device/Deck.Device.csproj" />
   </Folder>
   <Folder Name="/Plugins/">
