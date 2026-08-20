@@ -79,13 +79,14 @@ public class DeckAppService
         // conectar todavía" sin tirar excepción (ver Fases 3-6).
         var decatronAuth = new DecatronAuthService(credentials, PluginClientIds.Decatron);
         var decatron = new DecatronPlugin(decatronAuth, new HttpClient());
+        var discord = new DiscordPlugin(PluginClientIds.Discord);
         var loadedPlugins = new[]
         {
             plugins.LoadInstance(new SystemActionsPlugin()),
             plugins.LoadInstance(decatron),
             plugins.LoadInstance(new ObsPlugin()),
             plugins.LoadInstance(new SpotifyPlugin(PluginClientIds.Spotify)),
-            plugins.LoadInstance(new DiscordPlugin(PluginClientIds.Discord)),
+            plugins.LoadInstance(discord),
             plugins.LoadInstance(new TwitchPlugin(PluginClientIds.Twitch)),
         };
 
@@ -102,6 +103,11 @@ public class DeckAppService
         // puede referenciarlo directo (los plugins dependen del Core, no al
         // revés), así que ActionExecutor solo conoce el delegado.
         var executor = new ActionExecutor(plugins, decatron.GetLiveVariablesAsync);
+
+        // Corre en su propio loop de fondo (ver DiscordRichPresenceService) —
+        // no bloquea el arranque ni depende de que Discord/Decatron ya estén
+        // conectados en este momento, cada uno se conecta solo cuando puede.
+        _ = new DiscordRichPresenceService(discord, decatron.GetLiveVariablesAsync);
 
         return new DeckAppService(db, plugins, executor, credentials, icons);
     }

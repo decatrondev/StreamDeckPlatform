@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json;
 using Deck.SDK;
 using Deck.SDK.Plugins;
@@ -134,6 +135,33 @@ public sealed class DiscordPlugin : IPlugin
 
         return PluginActionResult.Ok("Mensaje enviado.");
     }
+
+    // Rich Presence — separado de ExecuteActionAsync porque no lo dispara un
+    // botón del Stream Deck, lo llama DiscordRichPresenceService en un loop
+    // propio mientras el streamer está en vivo (ver DeckAppService).
+    public Task SetActivityAsync(DiscordActivity activity, CancellationToken ct = default) =>
+        _ipc.SendCommandAsync("SET_ACTIVITY", new
+        {
+            pid = Environment.ProcessId,
+            activity = new
+            {
+                details = activity.Details,
+                state = activity.State,
+                assets = new
+                {
+                    large_image = activity.LargeImageKey,
+                    large_text = activity.LargeImageText,
+                    small_image = activity.SmallImageKey,
+                    small_text = activity.SmallImageText
+                },
+                buttons = activity.Buttons?.Select(b => new { label = b.Label, url = b.Url }).ToArray()
+            }
+        }, ct);
+
+    // activity:null es como Discord pide "borrar" el Rich Presence actual —
+    // no hay un comando CLEAR_ACTIVITY aparte.
+    public Task ClearActivityAsync(CancellationToken ct = default) =>
+        _ipc.SendCommandAsync("SET_ACTIVITY", new { pid = Environment.ProcessId, activity = (object?)null }, ct);
 
     private void OnIpcEvent(string evt, JsonElement data) =>
         EventRaised?.Invoke(this, new PluginEvent(
