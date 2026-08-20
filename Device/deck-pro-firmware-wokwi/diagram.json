@@ -1,0 +1,1157 @@
+{
+  "version": 1,
+  "author": "Flowdeck",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "id": "esp",
+      "type": "board-esp32-s3-devkitc-1",
+      "top": 300,
+      "left": -420,
+      "attrs": {}
+    },
+    {
+      "id": "lcd0",
+      "type": "wokwi-ili9341",
+      "top": -60,
+      "left": 60,
+      "attrs": {}
+    },
+    {
+      "id": "lcd1",
+      "type": "wokwi-ili9341",
+      "top": -60,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "id": "lcd2",
+      "type": "wokwi-ili9341",
+      "top": -60,
+      "left": 400,
+      "attrs": {}
+    },
+    {
+      "id": "lcd3",
+      "type": "wokwi-ili9341",
+      "top": -60,
+      "left": 570,
+      "attrs": {}
+    },
+    {
+      "id": "lcd4",
+      "type": "wokwi-ili9341",
+      "top": -60,
+      "left": 740,
+      "attrs": {}
+    },
+    {
+      "id": "lcd5",
+      "type": "wokwi-ili9341",
+      "top": 160,
+      "left": 60,
+      "attrs": {}
+    },
+    {
+      "id": "lcd6",
+      "type": "wokwi-ili9341",
+      "top": 160,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "id": "lcd7",
+      "type": "wokwi-ili9341",
+      "top": 160,
+      "left": 400,
+      "attrs": {}
+    },
+    {
+      "id": "lcd8",
+      "type": "wokwi-ili9341",
+      "top": 160,
+      "left": 570,
+      "attrs": {}
+    },
+    {
+      "id": "lcd9",
+      "type": "wokwi-ili9341",
+      "top": 160,
+      "left": 740,
+      "attrs": {}
+    },
+    {
+      "id": "lcd10",
+      "type": "wokwi-ili9341",
+      "top": 380,
+      "left": 60,
+      "attrs": {}
+    },
+    {
+      "id": "lcd11",
+      "type": "wokwi-ili9341",
+      "top": 380,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "id": "lcd12",
+      "type": "wokwi-ili9341",
+      "top": 380,
+      "left": 400,
+      "attrs": {}
+    },
+    {
+      "id": "lcd13",
+      "type": "wokwi-ili9341",
+      "top": 380,
+      "left": 570,
+      "attrs": {}
+    },
+    {
+      "id": "lcd14",
+      "type": "wokwi-ili9341",
+      "top": 380,
+      "left": 740,
+      "attrs": {}
+    },
+    {
+      "id": "btn0",
+      "type": "wokwi-pushbutton",
+      "top": 720,
+      "left": 90,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn1",
+      "type": "wokwi-pushbutton",
+      "top": 720,
+      "left": 260,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn2",
+      "type": "wokwi-pushbutton",
+      "top": 720,
+      "left": 430,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn3",
+      "type": "wokwi-pushbutton",
+      "top": 720,
+      "left": 600,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn4",
+      "type": "wokwi-pushbutton",
+      "top": 720,
+      "left": 770,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn5",
+      "type": "wokwi-pushbutton",
+      "top": 790,
+      "left": 90,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn6",
+      "type": "wokwi-pushbutton",
+      "top": 790,
+      "left": 260,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn7",
+      "type": "wokwi-pushbutton",
+      "top": 790,
+      "left": 430,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn8",
+      "type": "wokwi-pushbutton",
+      "top": 790,
+      "left": 600,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn9",
+      "type": "wokwi-pushbutton",
+      "top": 790,
+      "left": 770,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn10",
+      "type": "wokwi-pushbutton",
+      "top": 860,
+      "left": 90,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn11",
+      "type": "wokwi-pushbutton",
+      "top": 860,
+      "left": 260,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn12",
+      "type": "wokwi-pushbutton",
+      "top": 860,
+      "left": 430,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn13",
+      "type": "wokwi-pushbutton",
+      "top": 860,
+      "left": 600,
+      "attrs": {
+        "color": "blue"
+      }
+    },
+    {
+      "id": "btn14",
+      "type": "wokwi-pushbutton",
+      "top": 860,
+      "left": 770,
+      "attrs": {
+        "color": "blue"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "lcd0:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd0:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd0:CS",
+      "esp:1",
+      "gold",
+      []
+    ],
+    [
+      "lcd0:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd0:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd0:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd0:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd0:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd1:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd1:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd1:CS",
+      "esp:2",
+      "gold",
+      []
+    ],
+    [
+      "lcd1:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd1:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd1:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd1:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd1:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd2:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd2:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd2:CS",
+      "esp:4",
+      "gold",
+      []
+    ],
+    [
+      "lcd2:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd2:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd2:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd2:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd2:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd3:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd3:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd3:CS",
+      "esp:5",
+      "gold",
+      []
+    ],
+    [
+      "lcd3:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd3:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd3:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd3:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd3:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd4:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd4:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd4:CS",
+      "esp:6",
+      "gold",
+      []
+    ],
+    [
+      "lcd4:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd4:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd4:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd4:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd4:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd5:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd5:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd5:CS",
+      "esp:7",
+      "gold",
+      []
+    ],
+    [
+      "lcd5:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd5:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd5:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd5:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd5:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd6:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd6:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd6:CS",
+      "esp:8",
+      "gold",
+      []
+    ],
+    [
+      "lcd6:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd6:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd6:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd6:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd6:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd7:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd7:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd7:CS",
+      "esp:9",
+      "gold",
+      []
+    ],
+    [
+      "lcd7:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd7:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd7:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd7:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd7:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd8:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd8:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd8:CS",
+      "esp:10",
+      "gold",
+      []
+    ],
+    [
+      "lcd8:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd8:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd8:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd8:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd8:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd9:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd9:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd9:CS",
+      "esp:15",
+      "gold",
+      []
+    ],
+    [
+      "lcd9:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd9:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd9:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd9:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd9:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd10:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd10:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd10:CS",
+      "esp:16",
+      "gold",
+      []
+    ],
+    [
+      "lcd10:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd10:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd10:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd10:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd10:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd11:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd11:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd11:CS",
+      "esp:17",
+      "gold",
+      []
+    ],
+    [
+      "lcd11:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd11:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd11:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd11:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd11:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd12:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd12:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd12:CS",
+      "esp:18",
+      "gold",
+      []
+    ],
+    [
+      "lcd12:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd12:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd12:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd12:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd12:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd13:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd13:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd13:CS",
+      "esp:19",
+      "gold",
+      []
+    ],
+    [
+      "lcd13:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd13:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd13:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd13:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd13:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd14:VCC",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "lcd14:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd14:CS",
+      "esp:20",
+      "gold",
+      []
+    ],
+    [
+      "lcd14:RST",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "lcd14:D/C",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lcd14:MOSI",
+      "esp:11",
+      "green",
+      []
+    ],
+    [
+      "lcd14:SCK",
+      "esp:12",
+      "yellow",
+      []
+    ],
+    [
+      "lcd14:LED",
+      "esp:3V3.1",
+      "red",
+      []
+    ],
+    [
+      "btn0:1.l",
+      "esp:21",
+      "purple",
+      []
+    ],
+    [
+      "btn0:2.r",
+      "esp:37",
+      "cyan",
+      []
+    ],
+    [
+      "btn1:1.l",
+      "esp:21",
+      "purple",
+      []
+    ],
+    [
+      "btn1:2.r",
+      "esp:39",
+      "cyan",
+      []
+    ],
+    [
+      "btn2:1.l",
+      "esp:21",
+      "purple",
+      []
+    ],
+    [
+      "btn2:2.r",
+      "esp:40",
+      "cyan",
+      []
+    ],
+    [
+      "btn3:1.l",
+      "esp:21",
+      "purple",
+      []
+    ],
+    [
+      "btn3:2.r",
+      "esp:41",
+      "cyan",
+      []
+    ],
+    [
+      "btn4:1.l",
+      "esp:21",
+      "purple",
+      []
+    ],
+    [
+      "btn4:2.r",
+      "esp:42",
+      "cyan",
+      []
+    ],
+    [
+      "btn5:1.l",
+      "esp:35",
+      "purple",
+      []
+    ],
+    [
+      "btn5:2.r",
+      "esp:37",
+      "cyan",
+      []
+    ],
+    [
+      "btn6:1.l",
+      "esp:35",
+      "purple",
+      []
+    ],
+    [
+      "btn6:2.r",
+      "esp:39",
+      "cyan",
+      []
+    ],
+    [
+      "btn7:1.l",
+      "esp:35",
+      "purple",
+      []
+    ],
+    [
+      "btn7:2.r",
+      "esp:40",
+      "cyan",
+      []
+    ],
+    [
+      "btn8:1.l",
+      "esp:35",
+      "purple",
+      []
+    ],
+    [
+      "btn8:2.r",
+      "esp:41",
+      "cyan",
+      []
+    ],
+    [
+      "btn9:1.l",
+      "esp:35",
+      "purple",
+      []
+    ],
+    [
+      "btn9:2.r",
+      "esp:42",
+      "cyan",
+      []
+    ],
+    [
+      "btn10:1.l",
+      "esp:36",
+      "purple",
+      []
+    ],
+    [
+      "btn10:2.r",
+      "esp:37",
+      "cyan",
+      []
+    ],
+    [
+      "btn11:1.l",
+      "esp:36",
+      "purple",
+      []
+    ],
+    [
+      "btn11:2.r",
+      "esp:39",
+      "cyan",
+      []
+    ],
+    [
+      "btn12:1.l",
+      "esp:36",
+      "purple",
+      []
+    ],
+    [
+      "btn12:2.r",
+      "esp:40",
+      "cyan",
+      []
+    ],
+    [
+      "btn13:1.l",
+      "esp:36",
+      "purple",
+      []
+    ],
+    [
+      "btn13:2.r",
+      "esp:41",
+      "cyan",
+      []
+    ],
+    [
+      "btn14:1.l",
+      "esp:36",
+      "purple",
+      []
+    ],
+    [
+      "btn14:2.r",
+      "esp:42",
+      "cyan",
+      []
+    ]
+  ],
+  "dependencies": {}
+}
