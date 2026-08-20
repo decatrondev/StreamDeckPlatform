@@ -13,12 +13,13 @@ const uint8_t TFT_DC   = 13;
 const uint8_t TFT_RST  = 14; // reset compartido entre las 15
 
 const uint8_t TFT_CS[NUM_KEYS] = {
-  1, 2, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 19, 20
+  1, 2, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 18, 39, 40
 };
 
 // Matriz de botones 3x5 (15 teclas, 8 pines en vez de 15)
-const uint8_t ROW_PINS[NUM_ROWS] = {21, 35, 36};
-const uint8_t COL_PINS[NUM_COLS] = {37, 39, 40, 41, 42};
+// Pines seguros de ESP32-S3 (evitando 35, 36, 37 del bus Octal Flash/PSRAM)
+const uint8_t ROW_PINS[NUM_ROWS] = {21, 38, 45};
+const uint8_t COL_PINS[NUM_COLS] = {46, 47, 48, 3, 0};
 
 Adafruit_ILI9341* displays[NUM_KEYS];
 bool keyState[NUM_KEYS] = {false};
@@ -44,46 +45,58 @@ void drawKey(int idx, bool pressed) {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200, SERIAL_8N1, 44, 43);
+  delay(1000);
+  Serial.println("\r\n--- ESP32-S3 FLOWDECK FIRMWARE STARTING ---");
+
+  // Single hardware reset for all 15 displays sharing RST pin 14
+  pinMode(TFT_RST, OUTPUT);
+  digitalWrite(TFT_RST, HIGH);
+  delay(10);
+  digitalWrite(TFT_RST, LOW);
+  delay(10);
+  digitalWrite(TFT_RST, HIGH);
+  delay(150);
+
   SPI.begin(TFT_SCK, -1, TFT_MOSI, -1);
 
   for (int i = 0; i < NUM_KEYS; i++) {
     pinMode(TFT_CS[i], OUTPUT);
     digitalWrite(TFT_CS[i], HIGH);
-    displays[i] = new Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS[i], TFT_RST);
+    displays[i] = new Adafruit_ILI9341(&SPI, TFT_DC, TFT_CS[i], -1);
     displays[i]->begin();
     displays[i]->setRotation(1);
     drawKey(i, false);
+    Serial.printf("LCD %d READY\r\n", i);
   }
 
   for (int r = 0; r < NUM_ROWS; r++) {
-    pinMode(ROW_PINS[r], OUTPUT);
-    digitalWrite(ROW_PINS[r], HIGH);
+    pinMode(ROW_PINS[r], INPUT);
   }
   for (int c = 0; c < NUM_COLS; c++) {
     pinMode(COL_PINS[c], INPUT_PULLUP);
   }
 
-  Serial.println("READY");
+  Serial.println("=== SYSTEM READY - WAITING FOR BUTTON EVENTS ===");
+  Serial.flush();
 }
 
-// Protocolo placeholder por serial USB: "KEY:<indice 0-14>:DOWN" / "...:UP"
-// Todavia sin cerrar con el resto del proyecto (ver 01-plan.md), pero deja
-// algo concreto para probar la comunicacion end to end.
 void loop() {
   for (int r = 0; r < NUM_ROWS; r++) {
+    pinMode(ROW_PINS[r], OUTPUT);
     digitalWrite(ROW_PINS[r], LOW);
     delayMicroseconds(20);
     for (int c = 0; c < NUM_COLS; c++) {
       int idx = r * NUM_COLS + c;
-      bool pressed = digitalRead(COL_PINS[c]) == LOW;
+      bool pressed = (digitalRead(COL_PINS[c]) == LOW);
       if (pressed != keyState[idx]) {
         keyState[idx] = pressed;
-        Serial.printf("KEY:%d:%s\n", idx, pressed ? "DOWN" : "UP");
+        Serial.printf("KEY:%d:%s\r\n", idx, pressed ? "DOWN" : "UP");
+        Serial.flush();
         drawKey(idx, pressed);
       }
     }
-    digitalWrite(ROW_PINS[r], HIGH);
+    pinMode(ROW_PINS[r], INPUT);
   }
   delay(10);
 }

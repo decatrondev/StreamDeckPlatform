@@ -2,13 +2,18 @@
   "version": 1,
   "author": "Flowdeck",
   "editor": "wokwi",
+  "serialMonitor": {
+    "display": "always"
+  },
   "parts": [
     {
       "id": "esp",
       "type": "board-esp32-s3-devkitc-1",
       "top": 300,
       "left": -420,
-      "attrs": {}
+      "attrs": {
+        "flashSize": "8"
+      }
     },
     {
       "id": "lcd0",
@@ -890,7 +895,7 @@
     ],
     [
       "lcd13:CS",
-      "esp:19",
+      "esp:39",
       "gold",
       []
     ],
@@ -938,7 +943,7 @@
     ],
     [
       "lcd14:CS",
-      "esp:20",
+      "esp:40",
       "gold",
       []
     ],
@@ -980,7 +985,7 @@
     ],
     [
       "btn0:2.r",
-      "esp:37",
+      "esp:46",
       "cyan",
       []
     ],
@@ -992,7 +997,7 @@
     ],
     [
       "btn1:2.r",
-      "esp:39",
+      "esp:47",
       "cyan",
       []
     ],
@@ -1004,7 +1009,7 @@
     ],
     [
       "btn2:2.r",
-      "esp:40",
+      "esp:48",
       "cyan",
       []
     ],
@@ -1016,7 +1021,7 @@
     ],
     [
       "btn3:2.r",
-      "esp:41",
+      "esp:3",
       "cyan",
       []
     ],
@@ -1028,128 +1033,152 @@
     ],
     [
       "btn4:2.r",
-      "esp:42",
+      "esp:0",
       "cyan",
       []
     ],
     [
       "btn5:1.l",
-      "esp:35",
+      "esp:38",
       "purple",
       []
     ],
     [
       "btn5:2.r",
-      "esp:37",
+      "esp:46",
       "cyan",
       []
     ],
     [
       "btn6:1.l",
-      "esp:35",
+      "esp:38",
       "purple",
       []
     ],
     [
       "btn6:2.r",
-      "esp:39",
+      "esp:47",
       "cyan",
       []
     ],
     [
       "btn7:1.l",
-      "esp:35",
+      "esp:38",
       "purple",
       []
     ],
     [
       "btn7:2.r",
-      "esp:40",
+      "esp:48",
       "cyan",
       []
     ],
     [
       "btn8:1.l",
-      "esp:35",
+      "esp:38",
       "purple",
       []
     ],
     [
       "btn8:2.r",
-      "esp:41",
+      "esp:3",
       "cyan",
       []
     ],
     [
       "btn9:1.l",
-      "esp:35",
+      "esp:38",
       "purple",
       []
     ],
     [
       "btn9:2.r",
-      "esp:42",
+      "esp:0",
       "cyan",
       []
     ],
     [
       "btn10:1.l",
-      "esp:36",
+      "esp:45",
       "purple",
       []
     ],
     [
       "btn10:2.r",
-      "esp:37",
+      "esp:46",
       "cyan",
       []
     ],
     [
       "btn11:1.l",
-      "esp:36",
+      "esp:45",
       "purple",
       []
     ],
     [
       "btn11:2.r",
-      "esp:39",
+      "esp:47",
       "cyan",
       []
     ],
     [
       "btn12:1.l",
-      "esp:36",
+      "esp:45",
       "purple",
       []
     ],
     [
       "btn12:2.r",
-      "esp:40",
+      "esp:48",
       "cyan",
       []
     ],
     [
       "btn13:1.l",
-      "esp:36",
+      "esp:45",
       "purple",
       []
     ],
     [
       "btn13:2.r",
-      "esp:41",
+      "esp:3",
       "cyan",
       []
     ],
     [
       "btn14:1.l",
-      "esp:36",
+      "esp:45",
       "purple",
       []
     ],
     [
       "btn14:2.r",
-      "esp:42",
+      "esp:0",
       "cyan",
+      []
+    ],
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "esp:TX0",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX0",
+      "$serialMonitor:TX",
+      "",
       []
     ]
   ],

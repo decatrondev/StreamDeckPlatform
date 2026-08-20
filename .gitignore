@@ -17,3 +17,7 @@ Thumbs.db
 appsettings.Secrets.json
 appsettings.Secrets.*.json
 *.local.json
+
+## PlatformIO & Wokwi build artifacts
+.pio/
+*.bak
