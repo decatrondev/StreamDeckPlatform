@@ -209,8 +209,19 @@ public sealed class TwitchPlugin : IPlugin
                 var description = parameters.ValueKind == JsonValueKind.Object && parameters.TryGetProperty("description", out var d)
                     ? d.GetString()
                     : null;
-                await _api.CreateStreamMarkerAsync(token, broadcasterId, description, ct);
-                return PluginActionResult.Ok("Marcador creado.");
+                try
+                {
+                    await _api.CreateStreamMarkerAsync(token, broadcasterId, description, ct);
+                    return PluginActionResult.Ok("Marcador creado.");
+                }
+                catch (TwitchApiException ex) when (ex.StatusCode == 404)
+                {
+                    // Twitch devuelve 404 acá cuando el stream no está en vivo —
+                    // los marcadores solo existen sobre un VOD que se está
+                    // grabando en ese momento. El 404 crudo ("Twitch devolvió
+                    // 404: ...") no le decía nada al usuario final.
+                    return PluginActionResult.Fail("No se pudo crear el marcador — el stream tiene que estar en vivo.");
+                }
 
             case "send-chat-message":
                 var message = parameters.GetProperty("message").GetString()!;

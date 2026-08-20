@@ -67,6 +67,8 @@ public sealed class DecatronPlugin : IPlugin
             """{"fields":[{"key":"gameId","label":"Categoría","type":"search","required":true}]}"""),
         new("set-title", "Cambiar título del stream", "Parámetro: title.",
             """{"fields":[{"key":"title","label":"Título","type":"text","required":true}]}"""),
+        new("create-marker", "Crear marcador", "Marca este momento del stream para encontrarlo rápido al editar — necesitás estar en vivo, y ser Afiliado o Partner de Twitch.",
+            """{"fields":[{"key":"description","label":"Descripción (opcional)","type":"text","required":false}]}"""),
         new("timer-start", "Iniciar timer", "Duración opcional en segundos — vacío usa la última configurada.",
             """{"fields":[{"key":"duration","label":"Duración en segundos (opcional)","type":"number","required":false}]}"""),
         new("timer-pause", "Pausar timer"),
@@ -113,6 +115,7 @@ public sealed class DecatronPlugin : IPlugin
             "send-chat-message" => await SendChatMessageAsync(token, parameters, ct),
             "set-category" => await SetCategoryAsync(token, parameters, ct),
             "set-title" => await SetTitleAsync(token, parameters, ct),
+            "create-marker" => await CreateMarkerAsync(token, parameters, ct),
             "timer-start" => await TimerStartAsync(token, parameters, ct),
             "timer-pause" => await SimplePostAsync(token, "/timer/pause", "Timer pausado.", ct),
             "timer-resume" => await SimplePostAsync(token, "/timer/resume", "Timer reanudado.", ct),
@@ -143,6 +146,26 @@ public sealed class DecatronPlugin : IPlugin
         var title = parameters.GetProperty("title").GetString()!;
         var (ok, body) = await PostAsync(token, "/twitch/title", new { title }, ct);
         return ok ? PluginActionResult.Ok("Título actualizado.") : PluginActionResult.Fail($"Decatron rechazó el cambio de título: {body}");
+    }
+
+    private async Task<PluginActionResult> CreateMarkerAsync(string token, JsonElement parameters, CancellationToken ct)
+    {
+        var description = parameters.ValueKind == JsonValueKind.Object && parameters.TryGetProperty("description", out var d)
+            ? d.GetString()
+            : null;
+
+        var (ok, body) = await PostAsync(token, "/twitch/marker", new { description }, ct);
+        if (ok) return PluginActionResult.Ok("Marcador creado.");
+
+        // El backend distingue "no está en vivo" (caso esperable, el usuario
+        // solo tiene que arrancar el stream) del resto de errores — sin esto
+        // el usuario veía el JSON crudo del backend en vez de una explicación.
+        if (body.Contains("stream_not_live"))
+        {
+            return PluginActionResult.Fail("No se pudo crear el marcador — el stream tiene que estar en vivo.");
+        }
+
+        return PluginActionResult.Fail($"Decatron rechazó crear el marcador: {body}");
     }
 
     private async Task<PluginActionResult> TimerStartAsync(string token, JsonElement parameters, CancellationToken ct)

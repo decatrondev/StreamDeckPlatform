@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Deck.Core.Auth;
+using Deck.Core.Plugins;
 using Deck.Plugins.Discord;
 using Deck.Plugins.Obs;
 using Deck.Plugins.Spotify;
@@ -131,7 +133,22 @@ public partial class SettingsPageViewModel : ViewModelBase
         RefreshStatuses();
         _ = RefreshDecatronStatusAsync();
         _ = LoadObsSettingsAsync();
+
+        // Sin esto, un cambio de estado de conexión (ej. OBS reconectando
+        // solo en segundo plano después de que se reabre OBS) no se veía
+        // reflejado acá hasta cerrar y volver a abrir Ajustes — RefreshStatuses
+        // solo se llamaba una vez, al construir la página. Los plugins avisan
+        // por acá cada vez que cambia su estado (ver ObsPlugin.OnConnectionStateChanged),
+        // así que basta con re-leer el estado cada vez que llega un evento.
+        if (_app is not null)
+        {
+            _app.Plugins.PluginEventReceived += OnPluginEventReceived;
+            Closed += () => _app.Plugins.PluginEventReceived -= OnPluginEventReceived;
+        }
     }
+
+    private void OnPluginEventReceived(object? sender, PluginEventReceivedEventArgs e) =>
+        Dispatcher.UIThread.Post(RefreshStatuses);
 
     private async Task LoadObsSettingsAsync()
     {
