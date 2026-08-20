@@ -76,9 +76,11 @@ public class SerialDeckDriverTests : IDisposable
             Type = ButtonSlotType.Folder, TargetPageId = targetPage.Id
         });
 
-        // idx 0 en la página destino, para confirmar que después de navegar
-        // el driver mira ButtonSlots de targetPage y no de pageId.
-        var innerSlot = new ButtonSlot { Id = Guid.NewGuid(), PageId = targetPage.Id, Row = 0, Column = 0, Type = ButtonSlotType.Action };
+        // idx 1 (no 0: esa posición queda reservada para "Volver" en
+        // cualquier página que no sea la raíz) en la página destino, para
+        // confirmar que después de navegar el driver mira ButtonSlots de
+        // targetPage y no de pageId.
+        var innerSlot = new ButtonSlot { Id = Guid.NewGuid(), PageId = targetPage.Id, Row = 0, Column = 1, Type = ButtonSlotType.Action };
         _db.ButtonSlots.Add(innerSlot);
         _db.ActionSteps.Add(new ActionStep
         {
@@ -93,9 +95,43 @@ public class SerialDeckDriverTests : IDisposable
         Assert.Equal(targetPage.Id, driver.CurrentPageId);
         Assert.Null(observed); // navegar no dispara ActionExecutor
 
-        await driver.ProcessLineAsync("KEY:0:DOWN"); // ahora corre innerSlot, no pageId de nuevo
+        await driver.ProcessLineAsync("KEY:1:DOWN"); // corre innerSlot de targetPage
         Assert.NotNull(observed);
         Assert.True(observed!.Success);
+    }
+
+    [Fact]
+    public async Task KeyDown_OnReservedBackPosition_ReturnsToPreviousPage_AndIgnoresAnyAssignedSlotThere()
+    {
+        var (driver, pageId) = CreateDriverWithPage();
+        var targetPage = new Page { Id = Guid.NewGuid(), Name = "Sub", Rows = 3, Columns = 5 };
+        _db.Pages.Add(targetPage);
+
+        _db.ButtonSlots.Add(new ButtonSlot
+        {
+            Id = Guid.NewGuid(), PageId = pageId, Row = 0, Column = 0,
+            Type = ButtonSlotType.Folder, TargetPageId = targetPage.Id
+        });
+
+        // (0,0) en targetPage tiene una acción asignada — no debería correr
+        // nunca, la reserva de "Volver" tapa cualquier cosa que hubiera ahí.
+        var shadowedSlot = new ButtonSlot { Id = Guid.NewGuid(), PageId = targetPage.Id, Row = 0, Column = 0, Type = ButtonSlotType.Action };
+        _db.ButtonSlots.Add(shadowedSlot);
+        _db.ActionSteps.Add(new ActionStep
+        {
+            Id = Guid.NewGuid(), ButtonSlotId = shadowedSlot.Id, Order = 0, PluginId = "dynamic-fake", ActionId = "ping", ParametersJson = "{}"
+        });
+        await _db.SaveChangesAsync();
+
+        var executed = false;
+        driver.StepsExecuted += (_, _, _) => executed = true;
+
+        await driver.ProcessLineAsync("KEY:0:DOWN"); // entra a targetPage
+        Assert.Equal(targetPage.Id, driver.CurrentPageId);
+
+        await driver.ProcessLineAsync("KEY:0:DOWN"); // "Volver", no la acción tapada
+        Assert.Equal(pageId, driver.CurrentPageId);
+        Assert.False(executed);
     }
 
     [Fact]

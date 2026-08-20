@@ -28,6 +28,10 @@ public sealed class SerialDeckDriver : IDisposable
 
     private Guid _currentPageId;
 
+    // Historial de navegación — mismo rol que _breadcrumb en MainViewModel.
+    // Vacío = estamos en la raíz.
+    private readonly Stack<Guid> _breadcrumb = new();
+
     // Observable para tests y, a futuro, feedback en la propia UI (ej. "la
     // última tecla física ejecutada falló"). row/column identifican qué
     // tecla corrió.
@@ -78,6 +82,14 @@ public sealed class SerialDeckDriver : IDisposable
     {
         try
         {
+            // Misma reserva que MainViewModel: (0,0) es "Volver" en cualquier
+            // página que no sea la raíz, pisa lo que hubiera asignado ahí.
+            if (row == 0 && column == 0 && _breadcrumb.Count > 0)
+            {
+                _currentPageId = _breadcrumb.Pop();
+                return;
+            }
+
             var slot = await _db.ButtonSlots
                 .FirstOrDefaultAsync(s => s.PageId == _currentPageId && s.Row == row && s.Column == column);
 
@@ -85,6 +97,7 @@ public sealed class SerialDeckDriver : IDisposable
 
             if (slot.Type == ButtonSlotType.Folder)
             {
+                _breadcrumb.Push(_currentPageId);
                 _currentPageId = slot.TargetPageId!.Value;
                 return;
             }
