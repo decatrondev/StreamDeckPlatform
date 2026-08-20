@@ -2,19 +2,26 @@ using Deck.Plugins.Discord;
 
 namespace Deck.UI.Avalonia.Services;
 
-// Mientras el streamer está en vivo (según Decatron), mantiene el Rich
-// Presence de Discord actualizado con un dato distinto cada ciclo — título
-// fijo, y la línea de estado rotando entre categoría/viewers/último
-// seguidor. Se apaga solo (ClearActivityAsync) apenas Decatron reporta que
-// ya no está en vivo, para no dejar datos viejos pegados en el perfil.
+// Mantiene el Rich Presence de Discord prendido todo el tiempo que Flowdeck
+// esté conectado a Discord, esté o no en vivo — es publicidad constante
+// (logos + botones a decatron.net/flowdeck.decatron.net), no algo atado a
+// si estás transmitiendo. En vivo muestra un carrusel con datos reales
+// (título/categoría/viewers/último seguidor); fuera de vivo muestra un
+// estado genérico con el tiempo que lleva Flowdeck abierto.
 public sealed class DiscordRichPresenceService : IAsyncDisposable
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(20);
 
-    // Cada entrada es una función que arma el texto de "state" a partir de
-    // las variables en vivo — null si ese dato no vino esta vez (ej. sin
-    // seguidor reciente), en cuyo caso se salta ese ciclo sin romper nada.
-    private static readonly Func<IReadOnlyDictionary<string, string>, string?>[] StateRotation =
+    private static readonly DiscordActivityButton[] Buttons =
+    [
+        new("decatron.net", "https://decatron.net"),
+        new("flowdeck.decatron.net", "https://flowdeck.decatron.net"),
+    ];
+
+    // Cada entrada arma el texto de "state" a partir de las variables en
+    // vivo — null si ese dato no vino esta vez (ej. sin seguidor reciente),
+    // en cuyo caso se salta ese ciclo sin romper nada.
+    private static readonly Func<IReadOnlyDictionary<string, string>, string?>[] LiveStateRotation =
     [
         vars => vars.GetValueOrDefault("{categoria}"),
         vars => vars.TryGetValue("{viewers}", out var v) ? $"👀 {v} espectadores" : null,
@@ -25,9 +32,9 @@ public sealed class DiscordRichPresenceService : IAsyncDisposable
     private readonly Func<CancellationToken, Task<IReadOnlyDictionary<string, string>>> _getLiveVariables;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _loopTask;
+    private readonly long _appOpenedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
     private int _rotationIndex;
-    private bool _wasLive;
 
     public DiscordRichPresenceService(
         DiscordPlugin discord, Func<CancellationToken, Task<IReadOnlyDictionary<string, string>>> getLiveVariables)
@@ -58,32 +65,36 @@ public sealed class DiscordRichPresenceService : IAsyncDisposable
         var vars = await _getLiveVariables(ct);
         var isLive = vars.ContainsKey("{titulo}");
 
-        if (!isLive)
+        if (isLive)
         {
-            if (_wasLive) await _discord.ClearActivityAsync(ct);
-            _wasLive = false;
+            var state = LiveStateRotation[_rotationIndex % LiveStateRotation.Length](vars);
+            _rotationIndex++;
+
+            if (state is null) return; // ese dato no vino esta vez — se prueba de nuevo en el próximo ciclo
+
+            await _discord.SetActivityAsync(new DiscordActivity(
+                Details: vars.GetValueOrDefault("{titulo}") ?? "En vivo",
+                State: state,
+                LargeImageKey: "decatron",
+                LargeImageText: "Decatron",
+                SmallImageKey: "flowdeck",
+                SmallImageText: "Flowdeck",
+                Buttons: Buttons), ct);
             return;
         }
 
-        _wasLive = true;
-
-        var state = StateRotation[_rotationIndex % StateRotation.Length](vars);
-        _rotationIndex++;
-
-        if (state is null) return; // ese dato no vino esta vez — se prueba de nuevo en el próximo ciclo
-
+        // Fuera de vivo: igual queda algo prendido en el perfil (publicidad
+        // constante) en vez de apagarse — el cronómetro pasa a contar desde
+        // que se abrió Flowdeck, no desde que se está en vivo.
         await _discord.SetActivityAsync(new DiscordActivity(
-            Details: vars.GetValueOrDefault("{titulo}") ?? "En vivo",
-            State: state,
+            Details: "🎛️ Preparando el stream",
+            State: "Con Flowdeck",
             LargeImageKey: "decatron",
             LargeImageText: "Decatron",
             SmallImageKey: "flowdeck",
             SmallImageText: "Flowdeck",
-            Buttons:
-            [
-                new DiscordActivityButton("decatron.net", "https://decatron.net"),
-                new DiscordActivityButton("flowdeck.decatron.net", "https://flowdeck.decatron.net"),
-            ]), ct);
+            StartTimestamp: _appOpenedAtUnix,
+            Buttons: Buttons), ct);
     }
 
     public async ValueTask DisposeAsync()

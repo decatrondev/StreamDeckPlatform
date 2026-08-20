@@ -138,7 +138,7 @@ public sealed class DiscordPlugin : IPlugin
 
     // Rich Presence — separado de ExecuteActionAsync porque no lo dispara un
     // botón del Stream Deck, lo llama DiscordRichPresenceService en un loop
-    // propio mientras el streamer está en vivo (ver DeckAppService).
+    // propio todo el tiempo que Flowdeck esté abierto (ver DeckAppService).
     public Task SetActivityAsync(DiscordActivity activity, CancellationToken ct = default) =>
         _ipc.SendCommandAsync("SET_ACTIVITY", new
         {
@@ -147,6 +147,7 @@ public sealed class DiscordPlugin : IPlugin
             {
                 details = activity.Details,
                 state = activity.State,
+                timestamps = activity.StartTimestamp is long start ? new { start } : null,
                 assets = new
                 {
                     large_image = activity.LargeImageKey,

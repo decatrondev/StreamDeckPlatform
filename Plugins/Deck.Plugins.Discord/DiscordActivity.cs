@@ -11,6 +11,8 @@ public sealed record DiscordActivity(
     string? LargeImageText = null,
     string? SmallImageKey = null,
     string? SmallImageText = null,
+    // Unix seconds — Discord arma el cronómetro "hace X" solo a partir de esto.
+    long? StartTimestamp = null,
     IReadOnlyList<DiscordActivityButton>? Buttons = null);
 
 // Discord solo acepta hasta 2 botones por activity.
